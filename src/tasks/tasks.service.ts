@@ -51,14 +51,16 @@ export class TasksService {
   updateTask(id: string, body: any) {
     const taskIndex = this.tasks.findIndex((task) => task.id === Number(id));
 
-    if (taskIndex >= 0) {
-      const taskItem = this.tasks[taskIndex];
-
-      this.tasks[taskIndex] = {
-        ...taskItem,
-        ...body,
-      };
+    if (taskIndex < 0) {
+      throwError('TASK_NOT_FOUND');
     }
+
+    const taskItem = this.tasks[taskIndex];
+
+    this.tasks[taskIndex] = {
+      ...taskItem,
+      ...body,
+    };
 
     return {
       message: 'Tarefa atualizada com sucesso',
@@ -67,6 +69,19 @@ export class TasksService {
   }
 
   deleteTask(id: string) {
-    return 'Deletar tarefa ID: ' + id;
+    const taskIndex = this.tasks.findIndex((task) => task.id === Number(id));
+
+    if (taskIndex < 0) {
+      throwError('TASK_NOT_FOUND');
+    }
+
+    const taskItem = this.tasks[taskIndex];
+
+    this.tasks.splice(taskIndex, 1);
+
+    return {
+      message: 'Tarefa excluida com sucesso',
+      task: taskItem,
+    };
   }
 }
