@@ -27,8 +27,8 @@ export class TasksService {
     return this.tasks;
   }
 
-  findTaskById(id: string) {
-    const task = this.tasks.find((task) => task.id === Number(id));
+  findTaskById(id: number) {
+    const task = this.tasks.find((task) => task.id === id);
 
     if (task) return task;
 
@@ -51,8 +51,8 @@ export class TasksService {
     };
   }
 
-  updateTask(id: string, updateTaskDto: UpdateTaskDto) {
-    const taskIndex = this.tasks.findIndex((task) => task.id === Number(id));
+  updateTask(id: number, updateTaskDto: UpdateTaskDto) {
+    const taskIndex = this.tasks.findIndex((task) => task.id === id);
 
     if (taskIndex < 0) {
       throwError('TASK_NOT_FOUND');
@@ -71,8 +71,8 @@ export class TasksService {
     };
   }
 
-  deleteTask(id: string) {
-    const taskIndex = this.tasks.findIndex((task) => task.id === Number(id));
+  deleteTask(id: number) {
+    const taskIndex = this.tasks.findIndex((task) => task.id === id);
 
     if (taskIndex < 0) {
       throwError('TASK_NOT_FOUND');
