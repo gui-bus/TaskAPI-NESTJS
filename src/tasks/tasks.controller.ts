@@ -1,3 +1,4 @@
+//#region Imports
 import {
   Body,
   Controller,
@@ -13,11 +14,15 @@ import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/createTask.dto';
 import { UpdateTaskDto } from './dto/updateTask.dto';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+//#endregion
 
 @Controller('tasks')
 export class TasksController {
+  //#region Setup
   constructor(private readonly tasksService: TasksService) {}
+  //#endregion
 
+  //#region Routes
   @Get()
   listAllTasks(@Query() paginationDto: PaginationDto) {
     return this.tasksService.listAll(paginationDto);
@@ -45,4 +50,5 @@ export class TasksController {
   deleteTask(@Param('id', ParseIntPipe) id: number) {
     return this.tasksService.deleteTask(id);
   }
+  //#endregion
 }

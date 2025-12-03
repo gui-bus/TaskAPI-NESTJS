@@ -1,3 +1,4 @@
+//#region Imports
 import { Injectable, Logger } from '@nestjs/common';
 import { throwError } from 'src/common/errors/core/errors.factory';
 import { UpdateTaskDto } from './dto/updateTask.dto';
@@ -7,13 +8,17 @@ import { isPrismaError } from 'src/common/errors/helpers/isPrismaError';
 import { logError } from 'src/common/errors/helpers/logError';
 import { AppError } from 'src/common/errors/core/appError';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+//#endregion
 
 @Injectable()
 export class TasksService {
+  //#region Setup
   private readonly logger = new Logger(TasksService.name);
 
   constructor(private prisma: PrismaService) {}
+  //#endregion
 
+  //#region Private Utilities
   /**
    * Retrieves an active (non-deleted) task by ID or throws an error if not found.
    *
@@ -36,7 +41,9 @@ export class TasksService {
     if (!task) throwError('TASK_NOT_FOUND');
     return task;
   }
+  //#endregion
 
+  //#region Task Queries
   /**
    * Retrieves a paginated list of active (non-deleted) tasks.
    *
@@ -242,4 +249,5 @@ export class TasksService {
       throwError('DATABASE_ERROR');
     }
   }
+  //#endregion
 }
