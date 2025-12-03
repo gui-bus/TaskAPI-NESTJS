@@ -5,6 +5,7 @@ import { CreateTaskDto } from './dto/createTask.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { isPrismaError } from 'src/common/errors/helpers/isPrismaError';
 import { logError } from 'src/common/errors/helpers/logError';
+import { AppError } from 'src/common/errors/core/appError';
 
 @Injectable()
 export class TasksService {
@@ -12,9 +13,42 @@ export class TasksService {
 
   constructor(private prisma: PrismaService) {}
 
+  /**
+   * Retrieves an active (non-deleted) task by ID or throws an error if not found.
+   *
+   * @private
+   * @async
+   * @param {number} id - Unique identifier of the task.
+   * @returns {Promise<Task>} The located active task.
+   *
+   * @throws {AppError<'TASK_NOT_FOUND'>} If the task does not exist or is soft-deleted.
+   *
+   * @example
+   * const task = await this.findActiveTaskOrThrow(3);
+   * console.log(task.name);
+   */
+  private async findActiveTaskOrThrow(id: number) {
+    const task = await this.prisma.task.findFirst({
+      where: { id, deletedAt: null },
+    });
+
+    if (!task) throwError('TASK_NOT_FOUND');
+    return task;
+  }
+
+  /**
+   * Retrieves all non-deleted tasks from the database.
+   *
+   * @async
+   * @returns {Promise<Task[]>} A list of all active tasks.
+   *
+   * @throws {AppError<'DATABASE_ERROR'>} When an unexpected database issue occurs.
+   */
   async listAll() {
     try {
-      return await this.prisma.task.findMany();
+      return await this.prisma.task.findMany({
+        where: { deletedAt: null },
+      });
     } catch (error) {
       logError(this.logger, error);
 
@@ -22,15 +56,29 @@ export class TasksService {
     }
   }
 
+  /**
+   * Retrieves a single task based on its ID.
+   *
+   * @async
+   * @param {number} id - Unique identifier of the task.
+   * @returns {Promise<Task>} The located task.
+   *
+   * @throws {AppError<'TASK_NOT_FOUND'>} If no task exists with the given ID.
+   * @throws {AppError<'DATABASE_ERROR'>} For unexpected database issues.
+   *
+   * @example
+   * const task = await tasksService.findTaskById(1);
+   * console.log(task.name);
+   */
   async findTaskById(id: number) {
     try {
-      const task = await this.prisma.task.findFirst({ where: { id } });
-
-      if (!task) throwError('TASK_NOT_FOUND');
-
-      return task;
+      return await this.findActiveTaskOrThrow(id);
     } catch (error) {
       logError(this.logger, error);
+
+      if (error instanceof AppError) {
+        throw error;
+      }
 
       if (isPrismaError(error)) {
         throw error;
@@ -40,6 +88,19 @@ export class TasksService {
     }
   }
 
+  /**
+   * Creates a new task with the provided data.
+   *
+   * @async
+   * @param {CreateTaskDto} createTaskDto - Payload containing name and description of the new task.
+   * @returns {Promise<{ message: string, task: Task }>} A success message and the newly created task.
+   *
+   * @throws {AppError<'DATABASE_ERROR'>} For unexpected database issues.
+   *
+   * @example
+   * const result = await tasksService.createTask({ name: "Fix bug", description: "Resolve login issue" });
+   * console.log(result.task.id);
+   */
   async createTask(createTaskDto: CreateTaskDto) {
     try {
       const newTask = await this.prisma.task.create({
@@ -61,11 +122,23 @@ export class TasksService {
     }
   }
 
+  /**
+   * Updates an existing task identified by ID.
+   *
+   * @async
+   * @param {number} id - Unique identifier of the task to update.
+   * @param {UpdateTaskDto} updateTaskDto - Payload with fields to update.
+   * @returns {Promise<{ message: string, task: Task }>} A success message and the updated task.
+   *
+   * @throws {AppError<'TASK_NOT_FOUND'>} If no task exists with the given ID.
+   * @throws {AppError<'DATABASE_ERROR'>} For unexpected database issues.
+   *
+   * @example
+   * await tasksService.updateTask(2, { completed: true });
+   */
   async updateTask(id: number, updateTaskDto: UpdateTaskDto) {
     try {
-      const task = await this.prisma.task.findFirst({ where: { id } });
-
-      if (!task) throwError('TASK_NOT_FOUND');
+      await this.findActiveTaskOrThrow(id);
 
       const updated = await this.prisma.task.update({
         where: { id },
@@ -87,24 +160,33 @@ export class TasksService {
     }
   }
 
+  /**
+   * Soft-deletes a task from the database.
+   *
+   * @async
+   * @param {number} id - Unique task identifier.
+   * @returns {Promise<{ message: string, task: Task }>} A success message and the removed task.
+   *
+   * @throws {AppError<'TASK_NOT_FOUND'>} If the specified task does not exist.
+   * @throws {AppError<'DATABASE_ERROR'>} For unexpected database issues.
+   */
   async deleteTask(id: number) {
     try {
-      const task = await this.prisma.task.findFirst({ where: { id } });
+      await this.findActiveTaskOrThrow(id);
 
-      if (!task) throwError('TASK_NOT_FOUND');
-
-      await this.prisma.task.delete({ where: { id } });
+      const deleted = await this.prisma.task.update({
+        where: { id },
+        data: { deletedAt: new Date() },
+      });
 
       return {
-        message: 'Tarefa excluida com sucesso',
-        task,
+        message: 'Tarefa excluída com sucesso',
+        task: deleted,
       };
     } catch (error) {
       logError(this.logger, error);
 
-      if (isPrismaError(error)) {
-        throw error;
-      }
+      if (isPrismaError(error)) throw error;
 
       throwError('DATABASE_ERROR');
     }
