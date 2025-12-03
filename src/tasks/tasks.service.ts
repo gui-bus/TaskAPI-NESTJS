@@ -3,9 +3,12 @@ import { Task } from './entities/task.entity';
 import { throwError } from 'src/common/errors/core/errors.factory';
 import { UpdateTaskDto } from './dto/updateTask.dto';
 import { CreateTaskDto } from './dto/createTask.dto';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class TasksService {
+  constructor(private prisma: PrismaService) {}
+
   private tasks: Task[] = [
     {
       id: 1,
@@ -23,8 +26,9 @@ export class TasksService {
     },
   ];
 
-  listAll() {
-    return this.tasks;
+  async listAll() {
+    const allTasks = await this.prisma.task.findMany();
+    return allTasks;
   }
 
   findTaskById(id: number) {

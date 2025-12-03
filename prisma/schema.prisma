@@ -6,7 +6,8 @@
 
 generator client {
   provider = "prisma-client"
-  output   = "../generated/prisma"
+  output   = "./generated/prisma"
+  moduleFormat = "cjs"
 }
 
 datasource db {
@@ -20,4 +21,5 @@ model Task {
   completed   Boolean
 
   createdAt DateTime? @default(now())
+  deletedAt DateTime?
 }
