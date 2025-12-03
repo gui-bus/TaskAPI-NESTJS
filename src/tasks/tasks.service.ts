@@ -6,6 +6,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { isPrismaError } from 'src/common/errors/helpers/isPrismaError';
 import { logError } from 'src/common/errors/helpers/logError';
 import { AppError } from 'src/common/errors/core/appError';
+import { PaginationDto } from 'src/common/dto/pagination.dto';
 
 @Injectable()
 export class TasksService {
@@ -44,10 +45,15 @@ export class TasksService {
    *
    * @throws {AppError<'DATABASE_ERROR'>} When an unexpected database issue occurs.
    */
-  async listAll() {
+  async listAll(paginationDto?: PaginationDto) {
+    const { limit = 10, offset = 0 } = paginationDto ?? {};
+
     try {
       return await this.prisma.task.findMany({
         where: { deletedAt: null },
+        take: limit,
+        skip: offset,
+        orderBy: { createdAt: 'desc' },
       });
     } catch (error) {
       logError(this.logger, error);
