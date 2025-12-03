@@ -1,94 +1,112 @@
-import { Injectable } from '@nestjs/common';
-import { Task } from './entities/task.entity';
+import { Injectable, Logger } from '@nestjs/common';
 import { throwError } from 'src/common/errors/core/errors.factory';
 import { UpdateTaskDto } from './dto/updateTask.dto';
 import { CreateTaskDto } from './dto/createTask.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { isPrismaError } from 'src/common/errors/helpers/isPrismaError';
+import { logError } from 'src/common/errors/helpers/logError';
 
 @Injectable()
 export class TasksService {
+  private readonly logger = new Logger(TasksService.name);
+
   constructor(private prisma: PrismaService) {}
 
-  private tasks: Task[] = [
-    {
-      id: 1,
-      name: 'Finalizar relatório trimestral de desempenho',
-      description:
-        'Consolidar indicadores, alinhar insights com as áreas envolvidas e preparar a apresentação para o comitê executivo.',
-      completed: true,
-    },
-    {
-      id: 2,
-      name: 'Implementar fluxo de onboarding do usuário',
-      description:
-        'Desenvolver o passo a passo inicial, integrar eventos de analytics e validar microinterações para otimizar a retenção.',
-      completed: false,
-    },
-  ];
-
   async listAll() {
-    const allTasks = await this.prisma.task.findMany();
-    return allTasks;
-  }
+    try {
+      return await this.prisma.task.findMany();
+    } catch (error) {
+      logError(this.logger, error);
 
-  findTaskById(id: number) {
-    const task = this.tasks.find((task) => task.id === id);
-
-    if (task) return task;
-
-    throwError('TASK_NOT_FOUND');
-  }
-
-  createTask(createTaskDto: CreateTaskDto) {
-    const newId = this.tasks.length + 1;
-    const newTask = {
-      id: newId,
-      ...createTaskDto,
-      completed: false,
-    };
-
-    this.tasks.push(newTask);
-
-    return {
-      message: 'Tarefa criada com sucesso',
-      task: newTask,
-    };
-  }
-
-  updateTask(id: number, updateTaskDto: UpdateTaskDto) {
-    const taskIndex = this.tasks.findIndex((task) => task.id === id);
-
-    if (taskIndex < 0) {
-      throwError('TASK_NOT_FOUND');
+      throwError('DATABASE_ERROR');
     }
-
-    const taskItem = this.tasks[taskIndex];
-
-    this.tasks[taskIndex] = {
-      ...taskItem,
-      ...updateTaskDto,
-    };
-
-    return {
-      message: 'Tarefa atualizada com sucesso',
-      task: this.tasks[taskIndex],
-    };
   }
 
-  deleteTask(id: number) {
-    const taskIndex = this.tasks.findIndex((task) => task.id === id);
+  async findTaskById(id: number) {
+    try {
+      const task = await this.prisma.task.findFirst({ where: { id } });
 
-    if (taskIndex < 0) {
-      throwError('TASK_NOT_FOUND');
+      if (!task) throwError('TASK_NOT_FOUND');
+
+      return task;
+    } catch (error) {
+      logError(this.logger, error);
+
+      if (isPrismaError(error)) {
+        throw error;
+      }
+
+      throwError('DATABASE_ERROR');
     }
+  }
 
-    const taskItem = this.tasks[taskIndex];
+  async createTask(createTaskDto: CreateTaskDto) {
+    try {
+      const newTask = await this.prisma.task.create({
+        data: {
+          name: createTaskDto.name,
+          description: createTaskDto.description,
+          completed: false,
+        },
+      });
 
-    this.tasks.splice(taskIndex, 1);
+      return {
+        message: 'Tarefa criada com sucesso',
+        task: newTask,
+      };
+    } catch (error) {
+      logError(this.logger, error);
 
-    return {
-      message: 'Tarefa excluida com sucesso',
-      task: taskItem,
-    };
+      throwError('DATABASE_ERROR');
+    }
+  }
+
+  async updateTask(id: number, updateTaskDto: UpdateTaskDto) {
+    try {
+      const task = await this.prisma.task.findFirst({ where: { id } });
+
+      if (!task) throwError('TASK_NOT_FOUND');
+
+      const updated = await this.prisma.task.update({
+        where: { id },
+        data: updateTaskDto,
+      });
+
+      return {
+        message: 'Tarefa atualizada com sucesso',
+        task: updated,
+      };
+    } catch (error) {
+      logError(this.logger, error);
+
+      if (isPrismaError(error)) {
+        throw error;
+      }
+
+      throwError('DATABASE_ERROR');
+    }
+  }
+
+  async deleteTask(id: number) {
+    try {
+      const task = await this.prisma.task.findFirst({ where: { id } });
+
+      if (!task) throwError('TASK_NOT_FOUND');
+
+      await this.prisma.task.delete({ where: { id } });
+
+      return {
+        message: 'Tarefa excluida com sucesso',
+        task,
+      };
+    } catch (error) {
+      logError(this.logger, error);
+
+      if (isPrismaError(error)) {
+        throw error;
+      }
+
+      throwError('DATABASE_ERROR');
+    }
   }
 }
