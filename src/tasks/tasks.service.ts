@@ -38,26 +38,71 @@ export class TasksService {
   }
 
   /**
-   * Retrieves all non-deleted tasks from the database.
+   * Retrieves a paginated list of active (non-deleted) tasks.
+   *
+   * Executes a transactional query that returns both the total number of
+   * available tasks and the paginated subset based on the provided
+   * `limit` and `offset`. Tasks are ordered by creation date in descending order.
    *
    * @async
-   * @returns {Promise<Task[]>} A list of all active tasks.
+   * @param {PaginationDto} [paginationDto] - Optional pagination settings.
+   * @param {number} [paginationDto.limit=10] - Maximum number of items to return.
+   * @param {number} [paginationDto.offset=0] - Number of items to skip before starting the page.
    *
-   * @throws {AppError<'DATABASE_ERROR'>} When an unexpected database issue occurs.
+   * @returns {Promise<{
+   *   tasks: Task[],
+   *   params: {
+   *     totalItems: number,
+   *     totalPages: number,
+   *     limit: number,
+   *     offset: number
+   *   }
+   * }>} An object containing the paginated tasks and metadata.
+   *
+   * @example
+   * // Retrieves the first page (10 items)
+   * const response = await taskService.listAll({ limit: 10, offset: 0 });
+   *
+   * @example
+   * // Retrieves the second page with a custom page size
+   * const response = await taskService.listAll({ limit: 5, offset: 5 });
+   *
+   * @example
+   * // Retrieves all items without providing any pagination configuration
+   * const response = await taskService.listAll();
+   *
+   * @throws {AppError<'DATABASE_ERROR'>}
+   * Thrown when an unexpected database failure occurs.
    */
   async listAll(paginationDto?: PaginationDto) {
     const { limit = 10, offset = 0 } = paginationDto ?? {};
 
     try {
-      return await this.prisma.task.findMany({
-        where: { deletedAt: null },
-        take: limit,
-        skip: offset,
-        orderBy: { createdAt: 'desc' },
-      });
+      const [totalItems, data] = await this.prisma.$transaction([
+        this.prisma.task.count({
+          where: { deletedAt: null },
+        }),
+        this.prisma.task.findMany({
+          where: { deletedAt: null },
+          take: limit,
+          skip: offset,
+          orderBy: { createdAt: 'desc' },
+        }),
+      ]);
+
+      const totalPages = Math.ceil(totalItems / limit);
+
+      return {
+        tasks: data,
+        params: {
+          totalItems,
+          totalPages,
+          limit,
+          offset,
+        },
+      };
     } catch (error) {
       logError(this.logger, error);
-
       throwError('DATABASE_ERROR');
     }
   }
