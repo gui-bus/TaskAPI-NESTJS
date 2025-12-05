@@ -31,7 +31,7 @@ export class TasksController {
   @UseInterceptors(LoggerInterceptor)
   @UseInterceptors(AddHeaderInterceptor)
   listAllTasks(@Query() paginationDto: PaginationDto) {
-    return this.tasksService.listAll(paginationDto);
+    return this.tasksService.listAllTasks(paginationDto);
   }
 
   @Get(':id')

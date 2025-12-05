@@ -81,7 +81,7 @@ export class TasksService {
    * @throws {AppError<'DATABASE_ERROR'>}
    * Thrown when an unexpected database failure occurs.
    */
-  async listAll(paginationDto?: PaginationDto) {
+  async listAllTasks(paginationDto?: PaginationDto) {
     const { limit = 10, offset = 0 } = paginationDto ?? {};
 
     try {
