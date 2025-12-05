@@ -1,5 +1,8 @@
+//#region Imports
 import { IsNotEmpty, IsString, MinLength } from 'class-validator';
+//#endregion
 
+//#region DTO
 export class CreateTaskDto {
   @IsString({ message: 'O nome deve ser um texto' })
   @MinLength(5, { message: 'O nome deve conter pelo menos 5 caracteres' })
@@ -13,3 +16,4 @@ export class CreateTaskDto {
   @IsNotEmpty({ message: 'A descrição não pode estar vazio' })
   readonly description: string;
 }
+//#endregion
