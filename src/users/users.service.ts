@@ -131,7 +131,18 @@ export class UsersService {
    */
   async findUserById(id: number) {
     try {
-      return await this.findActiveUserOrThrow(id);
+      const user = await this.prisma.user.findFirst({
+        where: { id, deletedAt: null },
+        include: {
+          tasks: true,
+        },
+        omit: {
+          password: true,
+        },
+      });
+      if (!user) throwError('USER_NOT_FOUND');
+
+      return user;
     } catch (error) {
       logError(this.logger, error);
 

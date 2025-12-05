@@ -161,11 +161,18 @@ export class TasksService {
    */
   async createTask(createTaskDto: CreateTaskDto) {
     try {
+      const user = await this.prisma.user.findFirst({
+        where: { id: createTaskDto.userId, deletedAt: null },
+      });
+
+      if (!user) throwError('USER_NOT_FOUND');
+
       const newTask = await this.prisma.task.create({
         data: {
           name: createTaskDto.name,
           description: createTaskDto.description,
           completed: false,
+          userId: createTaskDto.userId,
         },
       });
 
@@ -175,6 +182,10 @@ export class TasksService {
       };
     } catch (error) {
       logError(this.logger, error);
+
+      if (error instanceof AppError) {
+        throw error;
+      }
 
       throwError('DATABASE_ERROR');
     }
@@ -200,7 +211,15 @@ export class TasksService {
 
       const updated = await this.prisma.task.update({
         where: { id },
-        data: updateTaskDto,
+        data: {
+          ...(updateTaskDto.name && { name: updateTaskDto.name }),
+          ...(updateTaskDto.description && {
+            description: updateTaskDto.description,
+          }),
+          ...(updateTaskDto.completed && {
+            completed: updateTaskDto.completed,
+          }),
+        },
       });
 
       return {
