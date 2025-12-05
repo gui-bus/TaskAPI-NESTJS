@@ -19,6 +19,7 @@ export class LoggerInterceptor implements NestInterceptor {
     const url = request.url;
     const now = Date.now();
 
+    console.log(request['users']);
     console.log(`[REQUEST] ${method} ${url} ${Date.now() - now}ms`);
 
     return next
