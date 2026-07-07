@@ -8,6 +8,7 @@ import { logError } from 'src/common/errors/helpers/logError';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserDto } from './dto/createUser.dto';
 import { UpdateUserDto } from './dto/updateUser.dto';
+import { HashingServiceProtocol } from 'src/auth/hash/hashing.service';
 //#endregion
 
 @Injectable()
@@ -15,7 +16,10 @@ export class UsersService {
   //#region Setup
   private readonly logger = new Logger(UsersService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private readonly hashingService: HashingServiceProtocol,
+  ) {}
   //#endregion
 
   //#region Private Utilities
@@ -173,12 +177,16 @@ export class UsersService {
    */
   async createUser(createUserDto: CreateUserDto) {
     try {
+      const passwordHash = await this.hashingService.hash(
+        createUserDto.password,
+      );
+
       const newUser = await this.prisma.user.create({
         data: {
           firstName: createUserDto.firstName,
           lastName: createUserDto.lastName,
           email: createUserDto.email,
-          password: createUserDto.password,
+          password: passwordHash,
         },
         omit: { password: true },
       });
@@ -212,14 +220,17 @@ export class UsersService {
     try {
       await this.findActiveUserOrThrow(id);
 
+      let passwordHash: string | undefined;
+      if (updateUserDto.password) {
+        passwordHash = await this.hashingService.hash(updateUserDto.password);
+      }
+
       const updated = await this.prisma.user.update({
         where: { id },
         data: {
-          ...(updateUserDto.firstName && {
-            firstName: updateUserDto.firstName,
-          }),
-          ...(updateUserDto.lastName && { lastName: updateUserDto.lastName }),
-          ...(updateUserDto.password && { password: updateUserDto.password }),
+          firstName: updateUserDto.firstName,
+          lastName: updateUserDto.lastName,
+          password: passwordHash,
         },
         omit: { password: true },
       });

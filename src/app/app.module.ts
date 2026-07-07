@@ -11,6 +11,7 @@ import { AppService } from './app.service';
 import { TasksModule } from 'src/tasks/tasks.module';
 import { UsersModule } from 'src/users/users.module';
 import { LoggerMiddleware } from 'src/common/middlewares/logger.middleware';
+import { AuthModule } from 'src/auth/auth.module';
 //#endregion
 
 @Module({
@@ -20,6 +21,7 @@ import { LoggerMiddleware } from 'src/common/middlewares/logger.middleware';
     }),
     TasksModule,
     UsersModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
