@@ -27,6 +27,6 @@ import { ErrorCodes } from '../messages/tasks.errorCodes';
  * throwError('DATABASE_ERROR');
  * ```
  */
-export const throwError = (errorCode: keyof typeof ErrorCodes) => {
+export function throwError(errorCode: keyof typeof ErrorCodes): never {
   throw new AppError(ErrorCodes[errorCode]);
-};
+}

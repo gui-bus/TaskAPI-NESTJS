@@ -22,6 +22,11 @@ export const ErrorCodes = {
     message: 'Os dados enviados são inválidos.',
     status: HttpStatus.BAD_REQUEST,
   },
+  INVALID_CREDENTIALS: {
+    code: 'INVALID_CREDENTIALS',
+    message: 'Credenciais inválidas.',
+    status: HttpStatus.UNAUTHORIZED,
+  },
   //#endregion
   //#region DATABASE
   DATABASE_ERROR: {
