@@ -135,6 +135,9 @@ describe('UsersService', () => {
         password: 'password123',
       };
 
+      const findFirstSpy = jest
+        .spyOn(prismaService.user, 'findFirst')
+        .mockResolvedValue(null);
       const hashSpy = jest
         .spyOn(hashingService, 'hash')
         .mockResolvedValue('HASH_MOCK_EXAMPLE');
@@ -148,6 +151,9 @@ describe('UsersService', () => {
 
       await userService.createUser(createUserDto);
 
+      expect(findFirstSpy).toHaveBeenCalledWith({
+        where: { email: createUserDto.email },
+      });
       expect(hashSpy).toHaveBeenCalled();
       expect(createSpy).toHaveBeenCalledWith({
         data: {
@@ -171,11 +177,29 @@ describe('UsersService', () => {
       const prismaError = new Error('Unique constraint failed');
       (prismaError as any).code = 'P2002';
 
+      jest.spyOn(prismaService.user, 'findFirst').mockResolvedValue(null);
       jest.spyOn(hashingService, 'hash').mockResolvedValue('HASH_MOCK');
       jest.spyOn(prismaService.user, 'create').mockRejectedValue(prismaError);
 
       await expect(userService.createUser(createUserDto)).rejects.toThrow(
         'Falha ao criar o usuário.',
+      );
+    });
+
+    it('should throw EMAIL_ALREADY_REGISTERED if email already exists', async () => {
+      const createUserDto: CreateUserDto = {
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'john@example.com',
+        password: 'password123',
+      };
+
+      jest
+        .spyOn(prismaService.user, 'findFirst')
+        .mockResolvedValue({ id: 1 } as any);
+
+      await expect(userService.createUser(createUserDto)).rejects.toThrow(
+        'E-mail já cadastrado.',
       );
     });
   });

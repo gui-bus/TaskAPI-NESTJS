@@ -187,6 +187,14 @@ export class UsersService {
    */
   async createUser(createUserDto: CreateUserDto) {
     try {
+      const existingUser = await this.prisma.user.findFirst({
+        where: { email: createUserDto.email },
+      });
+
+      if (existingUser) {
+        throwError('EMAIL_ALREADY_REGISTERED');
+      }
+
       const passwordHash = await this.hashingService.hash(
         createUserDto.password,
       );
@@ -206,6 +214,7 @@ export class UsersService {
         user: newUser,
       };
     } catch (error) {
+      if (error instanceof AppError) throw error;
       logError(this.logger, error);
 
       throwError('USER_CREATE_FAILED');

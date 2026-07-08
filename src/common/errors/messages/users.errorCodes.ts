@@ -21,4 +21,9 @@ export const UsersErrorCodes = {
     message: 'Falha ao criar o usuário.',
     status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
+  EMAIL_ALREADY_REGISTERED: {
+    code: 'EMAIL_ALREADY_REGISTERED',
+    message: 'E-mail já cadastrado.',
+    status: HttpStatus.CONFLICT,
+  },
 };

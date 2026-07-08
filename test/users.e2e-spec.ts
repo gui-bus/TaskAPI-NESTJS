@@ -100,6 +100,20 @@ describe('UsersController (e2e)', () => {
       expect(response.body.users).toEqual(mockUsers);
       expect(response.body.params.limit).toBe(5);
     });
+
+    it('should return 400 when limit exceeds 50', async () => {
+      await request(app.getHttpServer()).get('/users?limit=51').expect(400);
+    });
+
+    it('should return 400 when limit is negative', async () => {
+      await request(app.getHttpServer()).get('/users?limit=-1').expect(400);
+    });
+
+    it('should return 400 when limit is not an integer', async () => {
+      await request(app.getHttpServer())
+        .get('/users?limit=invalid')
+        .expect(400);
+    });
   });
 
   describe('GET /users/:id', () => {
@@ -295,6 +309,33 @@ describe('UsersController (e2e)', () => {
         .set('Authorization', `Bearer ${token}`)
         .attach('file', Buffer.from('mock file data'), 'avatar.txt')
         .expect(422);
+    });
+
+    it('should return 422 if file exceeds 1MB limit', async () => {
+      const mockUser = {
+        id: 1,
+        firstName: 'John',
+        lastName: 'Doe',
+        email: 'john@example.com',
+        active: true,
+      };
+
+      jest
+        .spyOn(prismaService.user, 'findFirst')
+        .mockResolvedValue(mockUser as any);
+
+      const largeBuffer = Buffer.alloc(1.1 * 1024 * 1024);
+
+      const response = await request(app.getHttpServer())
+        .post('/users/upload')
+        .set('Authorization', `Bearer ${token}`)
+        .attach('file', largeBuffer, {
+          filename: 'large.png',
+          contentType: 'image/png',
+        })
+        .expect(422);
+
+      expect(response.body.message).toBe('O arquivo deve ter no máximo 1MB');
     });
   });
 });
