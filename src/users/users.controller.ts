@@ -75,6 +75,7 @@ export class UsersController {
       new ParseFilePipeBuilder()
         .addFileTypeValidator({
           fileType: /(jpg|jpeg|png|webp)$/,
+          fallbackToMimetype: true,
           errorMessage:
             'O arquivo deve ser uma imagem (jpg, jpeg, png ou webp)',
         })

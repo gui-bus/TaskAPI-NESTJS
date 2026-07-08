@@ -32,6 +32,7 @@ export class TasksController {
     return this.tasksService.listAllTasks(paginationDto);
   }
 
+  @UseGuards(AuthTokenGuard)
   @Get(':id')
   findTaskById(
     @Param('id', ParseIntPipe) id: number,
