@@ -7,6 +7,7 @@ import jwtConfig from './config/jwt.config';
 import type { ConfigType } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { JwtSignOptions } from '@nestjs/jwt';
+import { TokenPayloadDto } from './dto/tokenPayload.dto';
 
 /**
  * Authentication Service.
@@ -98,6 +99,22 @@ export class AuthService {
       lastName: user.lastName,
       email: user.email,
       token,
+    };
+  }
+
+  /**
+   * Performs user logout.
+   *
+   * Since this API utilizes stateless JWTs, the server does not persist sessions.
+   * This endpoint acts as a confirmation for the client to safely clear the token
+   * locally. (Optionally, token blacklisting or session invalidation can be added here).
+   *
+   * @param {TokenPayloadDto} tokenPayload - The token payload of the authenticated user.
+   * @returns {{ message: string }} A confirmation message of successful logout.
+   */
+  logout(tokenPayload: TokenPayloadDto) {
+    return {
+      message: `Logout efetuado com sucesso para o usuário ${tokenPayload.email}`,
     };
   }
 }
