@@ -74,7 +74,7 @@ describe('UsersService', () => {
 
       const transactionSpy = jest
         .spyOn(prismaService, '$transaction')
-        .mockResolvedValue([count, mockUsers] as any);
+        .mockResolvedValue([count, mockUsers]);
 
       const result = await userService.listAllUsers({ limit: 10, offset: 0 });
 
@@ -205,7 +205,9 @@ describe('UsersService', () => {
         email: 'john@example.com',
       };
 
-      jest.spyOn(prismaService.user, 'findFirst').mockResolvedValue(mockUser as any);
+      jest
+        .spyOn(prismaService.user, 'findFirst')
+        .mockResolvedValue(mockUser as any);
       const hashSpy = jest
         .spyOn(hashingService, 'hash')
         .mockResolvedValue('NEW_HASH');
@@ -240,7 +242,9 @@ describe('UsersService', () => {
         email: 'jane@example.com',
       };
 
-      jest.spyOn(prismaService.user, 'findFirst').mockResolvedValue(mockUser as any);
+      jest
+        .spyOn(prismaService.user, 'findFirst')
+        .mockResolvedValue(mockUser as any);
 
       await expect(
         userService.updateUser(2, { firstName: 'Jane' }, tokenPayload),
@@ -276,10 +280,12 @@ describe('UsersService', () => {
         email: 'john@example.com',
       };
 
-      jest.spyOn(prismaService.user, 'findFirst').mockResolvedValue(mockUser as any);
+      jest
+        .spyOn(prismaService.user, 'findFirst')
+        .mockResolvedValue(mockUser as any);
       const transactionSpy = jest
         .spyOn(prismaService, '$transaction')
-        .mockResolvedValue([mockUser, { count: 5 }] as any);
+        .mockResolvedValue([mockUser, { count: 5 }]);
 
       const result = await userService.deleteUser(1, tokenPayload);
 
@@ -295,7 +301,9 @@ describe('UsersService', () => {
         email: 'jane@example.com',
       };
 
-      jest.spyOn(prismaService.user, 'findFirst').mockResolvedValue(mockUser as any);
+      jest
+        .spyOn(prismaService.user, 'findFirst')
+        .mockResolvedValue(mockUser as any);
 
       await expect(userService.deleteUser(2, tokenPayload)).rejects.toThrow(
         'Acesso não autorizado.',
@@ -329,10 +337,15 @@ describe('UsersService', () => {
         avatar: null,
       };
 
-      jest.spyOn(prismaService.user, 'findFirst').mockResolvedValue(mockUser as any);
+      jest
+        .spyOn(prismaService.user, 'findFirst')
+        .mockResolvedValue(mockUser as any);
       const updateSpy = jest
         .spyOn(prismaService.user, 'update')
-        .mockResolvedValue({ ...mockUser, avatar: 'avatar_John_Doe.png' } as any);
+        .mockResolvedValue({
+          ...mockUser,
+          avatar: 'avatar_John_Doe.png',
+        } as any);
 
       const result = await userService.uploadAvatar(tokenPayload, mockFile);
 

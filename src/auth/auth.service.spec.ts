@@ -152,7 +152,9 @@ describe('AuthService', () => {
         active: true,
       };
 
-      jest.spyOn(prismaService.user, 'findFirst').mockResolvedValue(mockUser as any);
+      jest
+        .spyOn(prismaService.user, 'findFirst')
+        .mockResolvedValue(mockUser as any);
       jest.spyOn(hashingService, 'compare').mockResolvedValue(false);
 
       await expect(authService.autenticate(signInDto)).rejects.toThrow(

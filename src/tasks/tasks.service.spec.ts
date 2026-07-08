@@ -70,7 +70,7 @@ describe('TasksService', () => {
 
       const transactionSpy = jest
         .spyOn(prismaService, '$transaction')
-        .mockResolvedValue([count, mockTasks] as any);
+        .mockResolvedValue([count, mockTasks]);
 
       const result = await tasksService.listAllTasks({ limit: 10, offset: 0 });
 
@@ -128,7 +128,9 @@ describe('TasksService', () => {
         completed: false,
         userId: 2,
       };
-      jest.spyOn(prismaService.task, 'findFirst').mockResolvedValue(mockTask as any);
+      jest
+        .spyOn(prismaService.task, 'findFirst')
+        .mockResolvedValue(mockTask as any);
 
       await expect(
         tasksService.findTaskById(1, mockTokenPayload),
@@ -152,7 +154,9 @@ describe('TasksService', () => {
         userId: 1,
       };
 
-      jest.spyOn(prismaService.user, 'findFirst').mockResolvedValue(mockUser as any);
+      jest
+        .spyOn(prismaService.user, 'findFirst')
+        .mockResolvedValue(mockUser as any);
       const createSpy = jest
         .spyOn(prismaService.task, 'create')
         .mockResolvedValue(mockTask as any);
@@ -202,10 +206,16 @@ describe('TasksService', () => {
         userId: 1,
       };
 
-      jest.spyOn(prismaService.task, 'findFirst').mockResolvedValue(mockTask as any);
+      jest
+        .spyOn(prismaService.task, 'findFirst')
+        .mockResolvedValue(mockTask as any);
       const updateSpy = jest
         .spyOn(prismaService.task, 'update')
-        .mockResolvedValue({ ...mockTask, name: 'Updated Task', completed: true } as any);
+        .mockResolvedValue({
+          ...mockTask,
+          name: 'Updated Task',
+          completed: true,
+        } as any);
 
       const result = await tasksService.updateTask(
         1,
@@ -233,7 +243,9 @@ describe('TasksService', () => {
         completed: false,
         userId: 2,
       };
-      jest.spyOn(prismaService.task, 'findFirst').mockResolvedValue(mockTask as any);
+      jest
+        .spyOn(prismaService.task, 'findFirst')
+        .mockResolvedValue(mockTask as any);
 
       await expect(
         tasksService.updateTask(1, { name: 'Updated' }, mockTokenPayload),
@@ -251,7 +263,9 @@ describe('TasksService', () => {
         userId: 1,
       };
 
-      jest.spyOn(prismaService.task, 'findFirst').mockResolvedValue(mockTask as any);
+      jest
+        .spyOn(prismaService.task, 'findFirst')
+        .mockResolvedValue(mockTask as any);
       const updateSpy = jest
         .spyOn(prismaService.task, 'update')
         .mockResolvedValue({ ...mockTask, deletedAt: new Date() } as any);
@@ -270,7 +284,9 @@ describe('TasksService', () => {
         completed: false,
         userId: 2,
       };
-      jest.spyOn(prismaService.task, 'findFirst').mockResolvedValue(mockTask as any);
+      jest
+        .spyOn(prismaService.task, 'findFirst')
+        .mockResolvedValue(mockTask as any);
 
       await expect(
         tasksService.deleteTask(1, mockTokenPayload),
