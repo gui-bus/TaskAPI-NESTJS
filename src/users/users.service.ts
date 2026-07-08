@@ -30,13 +30,15 @@ export class UsersService {
    * @private
    * @async
    * @param {number} id - Unique identifier of the user.
+   * @param {TokenPayloadDto} tokenPayload - The token payload of the authenticated user.
    * @returns {Promise<User>} The located active user.
    *
    * @throws {AppError<'USER_NOT_FOUND'>} If the user does not exist or is soft-deleted.
+   * @throws {AppError<'UNAUTHORIZED'>} If the authenticated user is not updating their own profile.
    *
    * @example
-   * const user = await this.findActiveuserOrThrow(3);
-   * console.log(user.name);
+   * const user = await this.findActiveUserOrThrow(3, tokenPayload);
+   * console.log(user.firstName);
    */
   private async findActiveUserOrThrow(
     id: number,
@@ -171,13 +173,13 @@ export class UsersService {
    * Creates a new user with the provided data.
    *
    * @async
-   * @param {CreateUserDto} createUserDto - Payload containing name and description of the new user.
+   * @param {CreateUserDto} createUserDto - Payload containing the new user's email, name and password.
    * @returns {Promise<{ message: string, user: User }>} A success message and the newly created user.
    *
-   * @throws {AppError<'DATABASE_ERROR'>} For unexpected database issues.
+   * @throws {AppError<'USER_CREATE_FAILED'>} If database fails to create the user or email is duplicate.
    *
    * @example
-   * const result = await usersService.createUser({ firstName: "Jonh", lastName: "Doe" });
+   * const result = await usersService.createUser({ firstName: "Jonh", lastName: "Doe", email: "john@example.com", password: "securepassword" });
    * console.log(result.user.id);
    */
   async createUser(createUserDto: CreateUserDto) {
@@ -213,13 +215,15 @@ export class UsersService {
    * @async
    * @param {number} id - Unique identifier of the user to update.
    * @param {UpdateUserDto} updateUserDto - Payload with fields to update.
+   * @param {TokenPayloadDto} tokenPayload - The token payload of the authenticated user.
    * @returns {Promise<{ message: string, user: User }>} A success message and the updated user.
    *
    * @throws {AppError<'USER_NOT_FOUND'>} If no user exists with the given ID.
-   * @throws {AppError<'DATABASE_ERROR'>} For unexpected database issues.
+   * @throws {AppError<'UNAUTHORIZED'>} If the authenticated user is not the owner of this profile.
+   * @throws {AppError<'USER_UPDATE_FAILED'>} For unexpected database update issues.
    *
    * @example
-   * await usersService.updateUser(2, { lastName: Smith });
+   * await usersService.updateUser(2, { lastName: "Smith" }, tokenPayload);
    */
   async updateUser(
     id: number,
@@ -268,14 +272,13 @@ export class UsersService {
    *
    * @async
    * @param {number} id - The unique identifier of the user to be soft-deleted.
+   * @param {TokenPayloadDto} tokenPayload - The token payload of the authenticated user.
    * @returns {Promise<{ message: string; user: User }>}
-   * Returns a confirmation message and the updated (soft-deleted) user.
+   *          Returns a confirmation message and the updated (soft-deleted) user.
    *
-   * @throws {AppError<'USER_NOT_FOUND'>}
-   * Thrown if the specified user does not exist or is already deleted.
-   *
-   * @throws {AppError<'DATABASE_ERROR'>}
-   * Thrown in case of unexpected database failures during the operation.
+   * @throws {AppError<'USER_NOT_FOUND'>} Thrown if the specified user does not exist.
+   * @throws {AppError<'UNAUTHORIZED'>} Thrown if the user is not authorized to delete this profile.
+   * @throws {AppError<'USER_DELETE_FAILED'>} Thrown in case of unexpected database failures.
    */
   async deleteUser(id: number, tokenPayload: TokenPayloadDto) {
     try {

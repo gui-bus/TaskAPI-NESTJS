@@ -26,12 +26,14 @@ export class TasksService {
    * @private
    * @async
    * @param {number} id - Unique identifier of the task.
+   * @param {TokenPayloadDto} tokenPayload - The token payload of the authenticated user.
    * @returns {Promise<Task>} The located active task.
    *
    * @throws {AppError<'TASK_NOT_FOUND'>} If the task does not exist or is soft-deleted.
+   * @throws {AppError<'UNAUTHORIZED'>} If the authenticated user does not own the task.
    *
    * @example
-   * const task = await this.findActiveTaskOrThrow(3);
+   * const task = await this.findActiveTaskOrThrow(3, tokenPayload);
    * console.log(task.name);
    */
   private async findActiveTaskOrThrow(
@@ -125,13 +127,15 @@ export class TasksService {
    *
    * @async
    * @param {number} id - Unique identifier of the task.
+   * @param {TokenPayloadDto} tokenPayload - The token payload of the authenticated user.
    * @returns {Promise<Task>} The located task.
    *
    * @throws {AppError<'TASK_NOT_FOUND'>} If no task exists with the given ID.
+   * @throws {AppError<'UNAUTHORIZED'>} If the user is not the owner of this task.
    * @throws {AppError<'DATABASE_ERROR'>} For unexpected database issues.
    *
    * @example
-   * const task = await tasksService.findTaskById(1);
+   * const task = await tasksService.findTaskById(1, tokenPayload);
    * console.log(task.name);
    */
   async findTaskById(id: number, tokenPayload: TokenPayloadDto) {
@@ -157,12 +161,14 @@ export class TasksService {
    *
    * @async
    * @param {CreateTaskDto} createTaskDto - Payload containing name and description of the new task.
+   * @param {TokenPayloadDto} tokenPayload - The token payload of the authenticated user.
    * @returns {Promise<{ message: string, task: Task }>} A success message and the newly created task.
    *
-   * @throws {AppError<'DATABASE_ERROR'>} For unexpected database issues.
+   * @throws {AppError<'USER_NOT_FOUND'>} If the task owner user does not exist.
+   * @throws {AppError<'TASK_CREATE_FAILED'>} If the database fails to create the task.
    *
    * @example
-   * const result = await tasksService.createTask({ name: "Fix bug", description: "Resolve login issue" });
+   * const result = await tasksService.createTask({ name: "Fix bug", description: "Resolve login issue" }, tokenPayload);
    * console.log(result.task.id);
    */
   async createTask(
@@ -206,13 +212,15 @@ export class TasksService {
    * @async
    * @param {number} id - Unique identifier of the task to update.
    * @param {UpdateTaskDto} updateTaskDto - Payload with fields to update.
+   * @param {TokenPayloadDto} tokenPayload - The token payload of the authenticated user.
    * @returns {Promise<{ message: string, task: Task }>} A success message and the updated task.
    *
    * @throws {AppError<'TASK_NOT_FOUND'>} If no task exists with the given ID.
-   * @throws {AppError<'DATABASE_ERROR'>} For unexpected database issues.
+   * @throws {AppError<'UNAUTHORIZED'>} If the user is not the owner of the task.
+   * @throws {AppError<'TASK_UPDATE_FAILED'>} For unexpected database update issues.
    *
    * @example
-   * await tasksService.updateTask(2, { completed: true });
+   * await tasksService.updateTask(2, { completed: true }, tokenPayload);
    */
   async updateTask(
     id: number,
@@ -255,10 +263,12 @@ export class TasksService {
    *
    * @async
    * @param {number} id - Unique task identifier.
+   * @param {TokenPayloadDto} tokenPayload - The token payload of the authenticated user.
    * @returns {Promise<{ message: string, task: Task }>} A success message and the removed task.
    *
    * @throws {AppError<'TASK_NOT_FOUND'>} If the specified task does not exist.
-   * @throws {AppError<'DATABASE_ERROR'>} For unexpected database issues.
+   * @throws {AppError<'UNAUTHORIZED'>} If the user is not the owner of the task.
+   * @throws {AppError<'TASK_DELETE_FAILED'>} For unexpected database deletion issues.
    */
   async deleteTask(id: number, tokenPayload: TokenPayloadDto) {
     try {

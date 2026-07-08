@@ -8,8 +8,23 @@ import type { ConfigType } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import type { JwtSignOptions } from '@nestjs/jwt';
 
+/**
+ * Authentication Service.
+ *
+ * This service handles user authentication by validating user credentials
+ * (email and password) using hashing comparison and generating JWT tokens
+ * for authenticated sessions.
+ */
 @Injectable()
 export class AuthService {
+  /**
+   * Creates an instance of AuthService.
+   *
+   * @param {PrismaService} prisma - Prisma client wrapper for database queries.
+   * @param {HashingServiceProtocol} hashingService - Service to compare hashed passwords.
+   * @param {ConfigType<typeof jwtConfig>} jwtConfiguration - JWT config object containing secret, ttl, etc.
+   * @param {JwtService} jwtService - NestJS JWT service to sign access tokens.
+   */
   constructor(
     private prisma: PrismaService,
     private readonly hashingService: HashingServiceProtocol,
@@ -19,6 +34,33 @@ export class AuthService {
     private readonly jwtService: JwtService,
   ) {}
 
+  /**
+   * Authenticates a user based on sign-in credentials.
+   *
+   * This method searches for the user by their email, verifies their password
+   * using the hashing service, and returns an access token if validation succeeds.
+   * To prevent user enumeration attacks, it returns a generic `INVALID_CREDENTIALS`
+   * error code regardless of whether the email or password was incorrect.
+   *
+   * @async
+   * @param {SignInDto} signInDto - The credentials payload containing email and password.
+   * @returns {Promise<{
+   *   id: number;
+   *   firstName: string;
+   *   lastName: string;
+   *   email: string;
+   *   token: string;
+   * }>} The authenticated user's profile and JWT session token.
+   *
+   * @throws {AppError<'INVALID_CREDENTIALS'>} If the email does not exist or the password is incorrect.
+   *
+   * @example
+   * const authSession = await authService.autenticate({
+   *   email: "user@example.com",
+   *   password: "password123"
+   * });
+   * console.log(authSession.token);
+   */
   async autenticate(signInDto: SignInDto) {
     const user = await this.prisma.user.findFirst({
       where: {
