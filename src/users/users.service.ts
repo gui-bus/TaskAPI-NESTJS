@@ -357,6 +357,10 @@ export class UsersService {
         updatedUser,
       };
     } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+
       logError(this.logger, error);
       throwError('USER_UPDATE_FAILED');
     }
