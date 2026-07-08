@@ -1,5 +1,5 @@
 //#region Imports
-import { IsNotEmpty, IsNumber, IsString, MinLength } from 'class-validator';
+import { IsNotEmpty, IsString, MinLength } from 'class-validator';
 //#endregion
 
 //#region DTO
@@ -15,9 +15,5 @@ export class CreateTaskDto {
   })
   @IsNotEmpty({ message: 'A descrição não pode estar vazio' })
   readonly description: string;
-
-  @IsNumber()
-  @IsNotEmpty({ message: 'O ID do usuário não pode estar vazio' })
-  readonly userId: number;
 }
 //#endregion

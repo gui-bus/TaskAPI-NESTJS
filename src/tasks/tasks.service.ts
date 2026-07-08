@@ -8,6 +8,7 @@ import { isPrismaError } from 'src/common/errors/helpers/isPrismaError';
 import { logError } from 'src/common/errors/helpers/logError';
 import { AppError } from 'src/common/errors/core/appError';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { TokenPayloadDto } from 'src/auth/dto/tokenPayload.dto';
 //#endregion
 
 @Injectable()
@@ -33,12 +34,17 @@ export class TasksService {
    * const task = await this.findActiveTaskOrThrow(3);
    * console.log(task.name);
    */
-  private async findActiveTaskOrThrow(id: number) {
+  private async findActiveTaskOrThrow(
+    id: number,
+    tokenPayload: TokenPayloadDto,
+  ) {
     const task = await this.prisma.task.findFirst({
       where: { id, deletedAt: null },
     });
 
     if (!task) throwError('TASK_NOT_FOUND');
+
+    if (task.userId !== tokenPayload.sub) throwError('UNAUTHORIZED');
     return task;
   }
   //#endregion
@@ -128,15 +134,15 @@ export class TasksService {
    * const task = await tasksService.findTaskById(1);
    * console.log(task.name);
    */
-  async findTaskById(id: number) {
+  async findTaskById(id: number, tokenPayload: TokenPayloadDto) {
     try {
-      return await this.findActiveTaskOrThrow(id);
+      return await this.findActiveTaskOrThrow(id, tokenPayload);
     } catch (error) {
-      logError(this.logger, error);
-
       if (error instanceof AppError) {
         throw error;
       }
+
+      logError(this.logger, error);
 
       if (isPrismaError(error)) {
         throw error;
@@ -159,10 +165,13 @@ export class TasksService {
    * const result = await tasksService.createTask({ name: "Fix bug", description: "Resolve login issue" });
    * console.log(result.task.id);
    */
-  async createTask(createTaskDto: CreateTaskDto) {
+  async createTask(
+    createTaskDto: CreateTaskDto,
+    tokenPayload: TokenPayloadDto,
+  ) {
     try {
       const user = await this.prisma.user.findFirst({
-        where: { id: createTaskDto.userId, deletedAt: null },
+        where: { id: tokenPayload.sub, deletedAt: null },
       });
 
       if (!user) throwError('USER_NOT_FOUND');
@@ -172,7 +181,7 @@ export class TasksService {
           name: createTaskDto.name,
           description: createTaskDto.description,
           completed: false,
-          userId: createTaskDto.userId,
+          userId: tokenPayload.sub,
         },
       });
 
@@ -187,7 +196,7 @@ export class TasksService {
         throw error;
       }
 
-      throwError('DATABASE_ERROR');
+      throwError('TASK_CREATE_FAILED');
     }
   }
 
@@ -205,9 +214,13 @@ export class TasksService {
    * @example
    * await tasksService.updateTask(2, { completed: true });
    */
-  async updateTask(id: number, updateTaskDto: UpdateTaskDto) {
+  async updateTask(
+    id: number,
+    updateTaskDto: UpdateTaskDto,
+    tokenPayload: TokenPayloadDto,
+  ) {
     try {
-      await this.findActiveTaskOrThrow(id);
+      await this.findActiveTaskOrThrow(id, tokenPayload);
 
       const updated = await this.prisma.task.update({
         where: { id },
@@ -223,13 +236,17 @@ export class TasksService {
         task: updated,
       };
     } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+
       logError(this.logger, error);
 
       if (isPrismaError(error)) {
         throw error;
       }
 
-      throwError('DATABASE_ERROR');
+      throwError('TASK_UPDATE_FAILED');
     }
   }
 
@@ -243,9 +260,9 @@ export class TasksService {
    * @throws {AppError<'TASK_NOT_FOUND'>} If the specified task does not exist.
    * @throws {AppError<'DATABASE_ERROR'>} For unexpected database issues.
    */
-  async deleteTask(id: number) {
+  async deleteTask(id: number, tokenPayload: TokenPayloadDto) {
     try {
-      await this.findActiveTaskOrThrow(id);
+      await this.findActiveTaskOrThrow(id, tokenPayload);
 
       const deleted = await this.prisma.task.update({
         where: { id },
@@ -257,11 +274,15 @@ export class TasksService {
         task: deleted,
       };
     } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+
       logError(this.logger, error);
 
       if (isPrismaError(error)) throw error;
 
-      throwError('DATABASE_ERROR');
+      throwError('TASK_DELETE_FAILED');
     }
   }
   //#endregion
