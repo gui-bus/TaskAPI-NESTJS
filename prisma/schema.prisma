@@ -28,11 +28,12 @@ model Task {
 }
 
 model User {
-  id        Int    @id @default(autoincrement())
+  id        Int     @id @default(autoincrement())
   firstName String
   lastName  String
-  email     String @unique
+  email     String  @unique
   password  String
+  active    Boolean @default(true)
 
   createdAt DateTime? @default(now())
   deletedAt DateTime?
