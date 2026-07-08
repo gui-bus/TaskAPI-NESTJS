@@ -1,6 +1,6 @@
 //#region Imports
 import { AppError } from './appError';
-import { ErrorCodes } from '../messages/tasks.errorCodes';
+import { ErrorCodes } from '../messages';
 //#endregion
 
 /**

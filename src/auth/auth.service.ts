@@ -26,7 +26,7 @@ export class AuthService {
       },
     });
 
-    if (!user) throwError('USER_NOT_FOUND');
+    if (!user) throwError('INVALID_CREDENTIALS');
 
     const isPasswordValid = await this.hashingService.compare(
       signInDto.password,

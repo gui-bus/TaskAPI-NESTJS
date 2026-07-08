@@ -203,7 +203,7 @@ export class UsersService {
     } catch (error) {
       logError(this.logger, error);
 
-      throwError('DATABASE_ERROR');
+      throwError('USER_CREATE_FAILED');
     }
   }
 
