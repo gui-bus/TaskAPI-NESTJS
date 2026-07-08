@@ -9,6 +9,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateUserDto } from './dto/createUser.dto';
 import { UpdateUserDto } from './dto/updateUser.dto';
 import { HashingServiceProtocol } from 'src/auth/hash/hashing.service';
+import { TokenPayloadDto } from 'src/auth/dto/tokenPayload.dto';
 //#endregion
 
 @Injectable()
@@ -37,12 +38,16 @@ export class UsersService {
    * const user = await this.findActiveuserOrThrow(3);
    * console.log(user.name);
    */
-  private async findActiveUserOrThrow(id: number) {
+  private async findActiveUserOrThrow(
+    id: number,
+    tokenPayload: TokenPayloadDto,
+  ) {
     const user = await this.prisma.user.findFirst({
       where: { id, deletedAt: null },
       omit: { password: true },
     });
     if (!user) throwError('USER_NOT_FOUND');
+    if (user.id !== tokenPayload.sub) throwError('UNAUTHORIZED');
     return user;
   }
   //#endregion
@@ -216,9 +221,13 @@ export class UsersService {
    * @example
    * await usersService.updateUser(2, { lastName: Smith });
    */
-  async updateUser(id: number, updateUserDto: UpdateUserDto) {
+  async updateUser(
+    id: number,
+    updateUserDto: UpdateUserDto,
+    tokenPayload: TokenPayloadDto,
+  ) {
     try {
-      await this.findActiveUserOrThrow(id);
+      await this.findActiveUserOrThrow(id, tokenPayload);
 
       let passwordHash: string | undefined;
       if (updateUserDto.password) {
@@ -240,13 +249,17 @@ export class UsersService {
         user: updated,
       };
     } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+
       logError(this.logger, error);
 
       if (isPrismaError(error)) {
         throw error;
       }
 
-      throwError('DATABASE_ERROR');
+      throwError('USER_UPDATE_FAILED');
     }
   }
 
@@ -264,9 +277,9 @@ export class UsersService {
    * @throws {AppError<'DATABASE_ERROR'>}
    * Thrown in case of unexpected database failures during the operation.
    */
-  async deleteUser(id: number) {
+  async deleteUser(id: number, tokenPayload: TokenPayloadDto) {
     try {
-      await this.findActiveUserOrThrow(id);
+      await this.findActiveUserOrThrow(id, tokenPayload);
 
       const now = new Date();
 
@@ -287,8 +300,12 @@ export class UsersService {
         user: deletedUser,
       };
     } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+
       logError(this.logger, error);
-      throwError('DATABASE_ERROR');
+      throwError('USER_DELETE_FAILED');
     }
   }
   //#endregion

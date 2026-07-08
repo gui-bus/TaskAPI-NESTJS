@@ -52,5 +52,16 @@ export const ErrorCodes = {
     status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
   //#endregion
+  //#region ACTIONS
+  USER_UPDATE_FAILED: {
+    code: 'USER_UPDATE_FAILED',
+    message: 'Falha ao atualizar o usuário.',
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+  },
+  USER_DELETE_FAILED: {
+    code: 'USER_DELETE_FAILED',
+    message: 'Falha ao excluir o usuário.',
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+  },
+  //#endregion
 };
-//#endregion

@@ -9,7 +9,6 @@ import {
   Patch,
   Post,
   Query,
-  Req,
   UseGuards,
 } from '@nestjs/common';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
@@ -17,8 +16,8 @@ import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/createUser.dto';
 import { UpdateUserDto } from './dto/updateUser.dto';
 import { AuthTokenGuard } from 'src/auth/guard/authToken.guard';
-import type { Request } from 'express';
-import { REQUEST_TOKEN_PAYLOAD_NAME } from 'src/auth/common/auth.constants';
+import { TokenPayloadParam } from 'src/auth/param/tokenPayload.param';
+import { TokenPayloadDto } from 'src/auth/dto/tokenPayload.dto';
 //#endregion
 @Controller('users')
 export class UsersController {
@@ -47,15 +46,18 @@ export class UsersController {
   updateUser(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateUserDto: UpdateUserDto,
-    @Req() req: Request,
+    @TokenPayloadParam() tokenPayload: TokenPayloadDto,
   ) {
-    console.log(req[REQUEST_TOKEN_PAYLOAD_NAME]);
-    return this.usersService.updateUser(id, updateUserDto);
+    return this.usersService.updateUser(id, updateUserDto, tokenPayload);
   }
 
+  @UseGuards(AuthTokenGuard)
   @Delete(':id')
-  deleteUser(@Param('id', ParseIntPipe) id: number) {
-    return this.usersService.deleteUser(id);
+  deleteUser(
+    @Param('id', ParseIntPipe) id: number,
+    @TokenPayloadParam() tokenPayload: TokenPayloadDto,
+  ) {
+    return this.usersService.deleteUser(id, tokenPayload);
   }
   //#endregion
 }
