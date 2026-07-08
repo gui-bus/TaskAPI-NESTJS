@@ -1,3 +1,4 @@
+/// <reference types="multer" />
 //#region Imports
 import { Injectable, Logger } from '@nestjs/common';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
@@ -10,6 +11,8 @@ import { CreateUserDto } from './dto/createUser.dto';
 import { UpdateUserDto } from './dto/updateUser.dto';
 import { HashingServiceProtocol } from 'src/auth/hash/hashing.service';
 import { TokenPayloadDto } from 'src/auth/dto/tokenPayload.dto';
+import * as path from 'node:path';
+import * as fs from 'node:fs/promises';
 //#endregion
 
 @Injectable()
@@ -309,6 +312,53 @@ export class UsersService {
 
       logError(this.logger, error);
       throwError('USER_DELETE_FAILED');
+    }
+  }
+
+  /**
+   * Uploads and saves the user's avatar image to the local files directory.
+   *
+   * @async
+   * @param {TokenPayloadDto} tokenPayload - The token payload of the authenticated user.
+   * @param {Express.Multer.File} file - The uploaded avatar file.
+   * @returns {Promise<{ message: string; updatedUser: Omit<User, 'password'> }>} A success message and the updated user profile.
+   *
+   * @throws {AppError<'USER_NOT_FOUND'>} If the user does not exist.
+   * @throws {AppError<'USER_UPDATE_FAILED'>} If saving the file to disk or updating database fails.
+   */
+  async uploadAvatar(tokenPayload: TokenPayloadDto, file: Express.Multer.File) {
+    try {
+      const fileExtension = path
+        .extname(file.originalname)
+        .toLowerCase()
+        .substring(1);
+
+      const fileName = `avatar_${tokenPayload.firstName}_${tokenPayload.lastName}.${fileExtension}`;
+      const fileLocale = path.resolve(process.cwd(), 'files', fileName);
+
+      await fs.writeFile(fileLocale, file.buffer);
+
+      const user = await this.prisma.user.findFirst({
+        where: { id: tokenPayload.sub, deletedAt: null },
+      });
+
+      if (!user) {
+        throwError('USER_NOT_FOUND');
+      }
+
+      const updatedUser = await this.prisma.user.update({
+        where: { id: user.id },
+        data: { avatar: fileName },
+        omit: { password: true },
+      });
+
+      return {
+        message: 'Avatar atualizado com sucesso',
+        updatedUser,
+      };
+    } catch (error) {
+      logError(this.logger, error);
+      throwError('USER_UPDATE_FAILED');
     }
   }
   //#endregion

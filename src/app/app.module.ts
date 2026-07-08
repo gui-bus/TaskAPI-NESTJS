@@ -12,6 +12,8 @@ import { TasksModule } from 'src/tasks/tasks.module';
 import { UsersModule } from 'src/users/users.module';
 import { LoggerMiddleware } from 'src/common/middlewares/logger.middleware';
 import { AuthModule } from 'src/auth/auth.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'node:path';
 //#endregion
 
 @Module({
@@ -22,6 +24,10 @@ import { AuthModule } from 'src/auth/auth.module';
     TasksModule,
     UsersModule,
     AuthModule,
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), 'files'),
+      serveRoot: '/files',
+    }),
   ],
   controllers: [AppController],
   providers: [AppService],

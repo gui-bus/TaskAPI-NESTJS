@@ -1,15 +1,20 @@
+/// <reference types="multer" />
 //#region Imports
 import {
   Body,
   Controller,
   Delete,
   Get,
+  HttpStatus,
   Param,
+  ParseFilePipeBuilder,
   ParseIntPipe,
   Patch,
   Post,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { UsersService } from './users.service';
@@ -18,6 +23,7 @@ import { UpdateUserDto } from './dto/updateUser.dto';
 import { AuthTokenGuard } from 'src/auth/guard/authToken.guard';
 import { TokenPayloadParam } from 'src/auth/param/tokenPayload.param';
 import { TokenPayloadDto } from 'src/auth/dto/tokenPayload.dto';
+import { FileInterceptor } from '@nestjs/platform-express';
 //#endregion
 @Controller('users')
 export class UsersController {
@@ -58,6 +64,31 @@ export class UsersController {
     @TokenPayloadParam() tokenPayload: TokenPayloadDto,
   ) {
     return this.usersService.deleteUser(id, tokenPayload);
+  }
+
+  @UseGuards(AuthTokenGuard)
+  @UseInterceptors(FileInterceptor('file'))
+  @Post('upload')
+  async uploadAvatar(
+    @TokenPayloadParam() tokenPayload: TokenPayloadDto,
+    @UploadedFile(
+      new ParseFilePipeBuilder()
+        .addFileTypeValidator({
+          fileType: /(jpg|jpeg|png|webp)$/,
+          errorMessage:
+            'O arquivo deve ser uma imagem (jpg, jpeg, png ou webp)',
+        })
+        .addMaxSizeValidator({
+          maxSize: 1 * 1024 * 1024,
+          errorMessage: 'O arquivo deve ter no máximo 1MB',
+        })
+        .build({
+          errorHttpStatusCode: HttpStatus.UNPROCESSABLE_ENTITY,
+        }),
+    )
+    file: Express.Multer.File,
+  ) {
+    return this.usersService.uploadAvatar(tokenPayload, file);
   }
   //#endregion
 }
