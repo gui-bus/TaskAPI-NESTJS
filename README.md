@@ -169,6 +169,40 @@ npm run test:cov
 
 ---
 
+## 💻 Guia de Integração para Front-End (Dev Empathy)
+
+Esta API foi estruturada pensando no consumo de clientes SPA/Mobile (React, Vue, Next.js, Flutter). Abaixo estão as especificações necessárias para integração:
+
+### 1. Fluxo de Autenticação JWT
+Os endpoints protegidos requerem o envio do token no cabeçalho `Authorization` usando o esquema `Bearer`:
+```http
+Authorization: Bearer <seu_token_jwt_aqui>
+```
+
+### 2. Padrão de Payload de Erro (`AppError`)
+Todas as falhas da API seguem uma assinatura de resposta padrão e previsível. Isso facilita o mapeamento no Axios/Fetch para exibir mensagens amigáveis em Toasts ou alertas na UI:
+
+```json
+{
+  "status": 401,
+  "message": "Acesso não autorizado.",
+  "code": "UNAUTHORIZED"
+}
+```
+* **Principais Códigos de Erro (`code`)**:
+  * `UNAUTHORIZED`: Token ausente, inválido ou expirado.
+  * `NOT_FOUND`: Entidade (usuário, tarefa, categoria) não existente.
+  * `INVALID_CREDENTIALS`: Erro de senha ou usuário no login.
+  * `TOO_MANY_REQUESTS`: Limite de chamadas do Rate Limiter atingido (Erro `429`).
+
+### 3. Integração com Postman / Insomnia / APIDog
+A especificação OpenAPI (Swagger JSON) é exposta em tempo real na rota:
+👉 **[http://localhost:3000/docs-json](http://localhost:3000/docs-json)**
+
+* **Como Importar**: No seu cliente REST (Postman, Insomnia ou APIDog), selecione **Import** -> **URL** e informe o link acima. Toda a coleção de endpoints, parâmetros e corpos JSON de exemplo serão carregados automaticamente.
+
+---
+
 ## ⚙️ CI/CD (GitHub Actions)
 
 A esteira automatizada de CI em [.github/workflows/ci.yml](file:///.github/workflows/ci.yml) executa verificações estritas a cada mudança integrada à branch `master`:
