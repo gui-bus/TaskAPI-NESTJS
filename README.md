@@ -92,6 +92,39 @@ sequenceDiagram
 
 ---
 
+## 📊 Modelagem do Banco de Dados (Schema Relacional)
+
+O banco de dados SQLite conta com a seguinte estrutura física de tabelas e enums mapeados no Prisma:
+
+### Tabelas Principais
+
+* **User**:
+  * `id`: `Int` (Auto-incremento, chave primária)
+  * `email`: `String` (Único)
+  * `firstName`: `String`
+  * `lastName`: `String`
+  * `password`: `String` (Armazena hash bcrypt)
+  * `avatar`: `String` (Caminho lógico para o arquivo físico)
+  * `active`: `Boolean` (Controle de ativação)
+* **Task**:
+  * `id`: `Int` (Auto-incremento, chave primária)
+  * `name`: `String`
+  * `description`: `String`
+  * `status`: `TaskStatus` (Enum)
+  * `userId`: `Int` (Chave estrangeira relacionando a `User`)
+  * `createdAt`: `DateTime`
+  * `deletedAt`: `DateTime` (Suporte a Soft Delete)
+* **Category**:
+  * `id`: `Int` (Auto-incremento, chave primária)
+  * `name`: `String`
+  * `userId`: `Int` (Chave estrangeira relacionando a `User`)
+
+### Relações e Junções
+
+* **Task $\leftrightarrow$ Category (Many-to-Many)**: Relação implícita gerenciada pelo Prisma através de uma tabela de junção física intermediária (`_TaskToCategory`), permitindo a vinculação dinâmica de múltiplas categorias a uma mesma tarefa.
+
+---
+
 ## 🔗 Resumo dos Endpoints Principais
 
 | Método | Endpoint | Protegido? | Descrição |
@@ -105,6 +138,36 @@ sequenceDiagram
 | **DELETE** | `/tasks/:id` | **Sim (JWT)** | Executa a remoção lógica (soft delete) da tarefa |
 | **POST** | `/categories` | **Sim (JWT)** | Cria uma categoria (tag) para organizar tarefas |
 | **GET** | `/categories` | **Sim (JWT)** | Lista todas as categorias criadas pelo usuário |
+
+---
+
+## 💻 Integração de APIs & Consumo Cliente
+
+Esta API foi estruturada para ser consumida de forma simplificada por aplicações cliente (SPAs, Mobile, etc.):
+
+### 1. Formato de Cabeçalho JWT
+Todas as rotas marcadas como protegidas requerem o envio do Token JWT nos cabeçalhos da requisição HTTP:
+```http
+Authorization: Bearer <seu_token_jwt_aqui>
+```
+
+### 2. Resposta de Erros Unificada (`AppError`)
+Todas as exceções capturadas pela API seguem uma estrutura previsível, facilitando a interceptação e tratamento nos clientes REST:
+```json
+{
+  "status": 401,
+  "message": "Acesso não autorizado.",
+  "code": "UNAUTHORIZED"
+}
+```
+* **Códigos comuns (`code`)**:
+  * `UNAUTHORIZED`: Falha na checagem ou assinatura do token JWT.
+  * `INVALID_CREDENTIALS`: Erro de senha ou usuário incorreto.
+  * `NOT_FOUND`: O ID consultado de tarefa ou categoria não existe.
+  * `TOO_MANY_REQUESTS`: Limite de chamadas do rate limiter atingido.
+
+### 3. Importação OpenAPI (Postman / Insomnia / APIDog)
+Você pode obter o JSON bruto de especificação OpenAPI para importá-lo no Postman ou APIDog diretamente na interface do **Scalar UI** (`http://localhost:3000/docs`). Basta clicar no botão de download/cópia da especificação localizado na barra lateral da página interativa.
 
 ---
 
