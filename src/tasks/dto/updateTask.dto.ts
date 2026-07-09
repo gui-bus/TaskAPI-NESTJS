@@ -1,13 +1,18 @@
-//#region Imports
-import { PartialType } from '@nestjs/mapped-types';
-import { IsBoolean, IsOptional } from 'class-validator';
+import { PartialType, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEnum, IsOptional } from 'class-validator';
 import { CreateTaskDto } from './createTask.dto';
-//#endregion
+import { TaskStatus } from 'prisma/generated/prisma/enums';
 
-//#region DTO
 export class UpdateTaskDto extends PartialType(CreateTaskDto) {
-  @IsBoolean({ message: 'O status deve ser verdadeiro ou falso' })
+  @ApiPropertyOptional({
+    description: 'Novo status da tarefa.',
+    enum: TaskStatus,
+    example: TaskStatus.IN_PROGRESS,
+  })
+  @IsEnum(TaskStatus, {
+    message: 'O status deve ser PENDING, IN_PROGRESS ou COMPLETED',
+  })
   @IsOptional()
-  readonly completed?: boolean;
+  readonly status?: TaskStatus;
 }
 //#endregion

@@ -70,7 +70,7 @@ describe('TasksController (e2e)', () => {
           name: 'Task 1',
           description:
             'This is a description that has more than thirty characters.',
-          completed: false,
+          status: 'PENDING',
           userId: 1,
         },
       ];
@@ -95,7 +95,7 @@ describe('TasksController (e2e)', () => {
         name: 'Task 1',
         description:
           'This is a description that has more than thirty characters.',
-        completed: false,
+        status: 'PENDING',
         userId: 1,
       };
 
@@ -134,7 +134,7 @@ describe('TasksController (e2e)', () => {
         name: 'Task 1',
         description:
           'This is a description that has more than thirty characters.',
-        completed: false,
+        status: 'PENDING',
         userId: 2,
       };
 
@@ -165,7 +165,7 @@ describe('TasksController (e2e)', () => {
         name: 'New Task',
         description:
           'This is a description that has more than thirty characters.',
-        completed: false,
+        status: 'PENDING',
         userId: 1,
       };
 
@@ -206,13 +206,13 @@ describe('TasksController (e2e)', () => {
 
   describe('PATCH /tasks/:id', () => {
     it('should update task successfully when authorized', async () => {
-      const payload = { name: 'Updated Task', completed: true };
+      const payload = { name: 'Updated Task', status: 'COMPLETED' };
       const mockTask = {
         id: 1,
         name: 'Task 1',
         description:
           'This is a description that has more than thirty characters.',
-        completed: false,
+        status: 'PENDING',
         userId: 1,
       };
 
@@ -233,7 +233,7 @@ describe('TasksController (e2e)', () => {
         .expect(200);
 
       expect(response.body.task.name).toBe('Updated Task');
-      expect(response.body.task.completed).toBe(true);
+      expect(response.body.task.status).toBe('COMPLETED');
     });
   });
 
@@ -244,7 +244,7 @@ describe('TasksController (e2e)', () => {
         name: 'Task 1',
         description:
           'This is a description that has more than thirty characters.',
-        completed: false,
+        status: 'PENDING',
         userId: 1,
       };
 

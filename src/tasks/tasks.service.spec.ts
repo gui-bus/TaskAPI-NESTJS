@@ -97,7 +97,7 @@ describe('TasksService', () => {
         id: 1,
         name: 'Task 1',
         description: 'Desc',
-        completed: false,
+        status: 'PENDING',
         userId: 1,
       };
       const findFirstSpy = jest
@@ -108,6 +108,7 @@ describe('TasksService', () => {
 
       expect(findFirstSpy).toHaveBeenCalledWith({
         where: { id: 1, deletedAt: null },
+        include: { categories: true },
       });
       expect(result).toEqual(mockTask);
     });
@@ -125,7 +126,7 @@ describe('TasksService', () => {
         id: 1,
         name: 'Task 1',
         description: 'Desc',
-        completed: false,
+        status: 'PENDING',
         userId: 2,
       };
       jest
@@ -150,7 +151,7 @@ describe('TasksService', () => {
         id: 1,
         name: 'New Task',
         description: 'New Description',
-        completed: false,
+        status: 'PENDING',
         userId: 1,
       };
 
@@ -170,8 +171,12 @@ describe('TasksService', () => {
         data: {
           name: 'New Task',
           description: 'New Description',
-          completed: false,
+          status: 'PENDING',
           userId: 1,
+          categories: undefined,
+        },
+        include: {
+          categories: true,
         },
       });
       expect(result.task).toEqual(mockTask);
@@ -195,14 +200,14 @@ describe('TasksService', () => {
     it('should update task successfully when authorized', async () => {
       const updateTaskDto: UpdateTaskDto = {
         name: 'Updated Task',
-        completed: true,
+        status: 'COMPLETED',
       };
 
       const mockTask = {
         id: 1,
         name: 'Task 1',
         description: 'Desc',
-        completed: false,
+        status: 'PENDING',
         userId: 1,
       };
 
@@ -214,7 +219,7 @@ describe('TasksService', () => {
         .mockResolvedValue({
           ...mockTask,
           name: 'Updated Task',
-          completed: true,
+          status: 'COMPLETED',
         } as any);
 
       const result = await tasksService.updateTask(
@@ -228,11 +233,15 @@ describe('TasksService', () => {
         data: {
           name: 'Updated Task',
           description: undefined,
-          completed: true,
+          status: 'COMPLETED',
+          categories: undefined,
+        },
+        include: {
+          categories: true,
         },
       });
       expect(result.task.name).toBe('Updated Task');
-      expect(result.task.completed).toBe(true);
+      expect(result.task.status).toBe('COMPLETED');
     });
 
     it('should throw UNAUTHORIZED if updating another user task', async () => {
@@ -240,7 +249,7 @@ describe('TasksService', () => {
         id: 1,
         name: 'Task 1',
         description: 'Desc',
-        completed: false,
+        status: 'PENDING',
         userId: 2,
       };
       jest
@@ -259,7 +268,7 @@ describe('TasksService', () => {
         id: 1,
         name: 'Task 1',
         description: 'Desc',
-        completed: false,
+        status: 'PENDING',
         userId: 1,
       };
 
@@ -281,7 +290,7 @@ describe('TasksService', () => {
         id: 1,
         name: 'Task 1',
         description: 'Desc',
-        completed: false,
+        status: 'PENDING',
         userId: 2,
       };
       jest

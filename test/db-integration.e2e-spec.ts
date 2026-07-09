@@ -139,7 +139,7 @@ describe('Database E2E Integration (real db-integration)', () => {
         where: { email: 'unique@example.com' },
       });
       expect(userInDb).toBeDefined();
-      expect(userInDb.firstName).toBe('Unique');
+      expect(userInDb!.firstName).toBe('Unique');
     });
   });
 
@@ -173,8 +173,8 @@ describe('Database E2E Integration (real db-integration)', () => {
         where: { id: taskId },
       });
       expect(taskInDb).toBeDefined();
-      expect(taskInDb.name).toBe('Integration Task');
-      expect(taskInDb.userId).toBe(userId);
+      expect(taskInDb!.name).toBe('Integration Task');
+      expect(taskInDb!.userId).toBe(userId);
     });
 
     it('should soft delete a task in the database', async () => {
@@ -185,7 +185,7 @@ describe('Database E2E Integration (real db-integration)', () => {
           description:
             'This is a description that has more than thirty characters.',
           userId: userId,
-          completed: false,
+          status: 'PENDING',
         },
       });
 
@@ -206,7 +206,7 @@ describe('Database E2E Integration (real db-integration)', () => {
         where: { id: task.id },
       });
       expect(deletedTaskInDb).toBeDefined();
-      expect(deletedTaskInDb.deletedAt).not.toBeNull();
+      expect(deletedTaskInDb!.deletedAt).not.toBeNull();
     });
   });
 });

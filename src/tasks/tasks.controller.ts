@@ -14,7 +14,7 @@ import {
 import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/createTask.dto';
 import { UpdateTaskDto } from './dto/updateTask.dto';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
+import { ListTasksDto } from './dto/listTasks.dto';
 import { AuthTokenGuard } from 'src/auth/guard/authToken.guard';
 import { TokenPayloadDto } from 'src/auth/dto/tokenPayload.dto';
 import { TokenPayloadParam } from 'src/auth/param/tokenPayload.param';
@@ -37,7 +37,8 @@ export class TasksController {
   //#region Routes
   @ApiOperation({
     summary: 'Listar tarefas',
-    description: 'Retorna uma lista paginada de todas as tarefas cadastradas.',
+    description:
+      'Retorna uma lista paginada e filtrada de todas as tarefas cadastradas.',
   })
   @ApiResponse({
     status: 200,
@@ -48,8 +49,8 @@ export class TasksController {
     description: 'Parâmetros de paginação inválidos.',
   })
   @Get()
-  listAllTasks(@Query() paginationDto: PaginationDto) {
-    return this.tasksService.listAllTasks(paginationDto);
+  listAllTasks(@Query() listTasksDto: ListTasksDto) {
+    return this.tasksService.listAllTasks(listTasksDto);
   }
 
   @ApiOperation({

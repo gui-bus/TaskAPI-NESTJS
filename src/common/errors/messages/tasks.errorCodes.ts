@@ -21,4 +21,9 @@ export const TasksErrorCodes = {
     message: 'Falha ao excluir a tarefa.',
     status: HttpStatus.INTERNAL_SERVER_ERROR,
   },
+  CATEGORY_NOT_FOUND: {
+    code: 'CATEGORY_NOT_FOUND',
+    message: 'Esta categoria não foi encontrada.',
+    status: HttpStatus.NOT_FOUND,
+  },
 };

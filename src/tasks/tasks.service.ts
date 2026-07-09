@@ -3,11 +3,11 @@ import { Injectable, Logger } from '@nestjs/common';
 import { throwError } from 'src/common/errors/core/errors.factory';
 import { UpdateTaskDto } from './dto/updateTask.dto';
 import { CreateTaskDto } from './dto/createTask.dto';
+import { ListTasksDto } from './dto/listTasks.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { isPrismaError } from 'src/common/errors/helpers/isPrismaError';
 import { logError } from 'src/common/errors/helpers/logError';
 import { AppError } from 'src/common/errors/core/appError';
-import { PaginationDto } from 'src/common/dto/pagination.dto';
 import { TokenPayloadDto } from 'src/auth/dto/tokenPayload.dto';
 //#endregion
 
@@ -42,6 +42,9 @@ export class TasksService {
   ) {
     const task = await this.prisma.task.findFirst({
       where: { id, deletedAt: null },
+      include: {
+        categories: true,
+      },
     });
 
     if (!task) throwError('TASK_NOT_FOUND');
@@ -89,19 +92,50 @@ export class TasksService {
    * @throws {AppError<'DATABASE_ERROR'>}
    * Thrown when an unexpected database failure occurs.
    */
-  async listAllTasks(paginationDto?: PaginationDto) {
-    const { limit = 10, offset = 0 } = paginationDto ?? {};
+  async listAllTasks(listTasksDto?: ListTasksDto) {
+    const { limit = 10, offset = 0 } = listTasksDto ?? {};
 
     try {
+      const where: any = {
+        deletedAt: null,
+      };
+
+      if (listTasksDto?.search) {
+        where.OR = [
+          { name: { contains: listTasksDto.search } },
+          { description: { contains: listTasksDto.search } },
+        ];
+      }
+
+      if (listTasksDto?.status) {
+        where.status = listTasksDto.status;
+      }
+
+      if (listTasksDto?.categoryId) {
+        where.categories = {
+          some: {
+            id: listTasksDto.categoryId,
+          },
+        };
+      }
+
+      const orderBy: any = {};
+      if (listTasksDto?.sortBy) {
+        orderBy[listTasksDto.sortBy] = listTasksDto.sortOrder ?? 'desc';
+      } else {
+        orderBy.createdAt = 'desc';
+      }
+
       const [totalItems, data] = await this.prisma.$transaction([
-        this.prisma.task.count({
-          where: { deletedAt: null },
-        }),
+        this.prisma.task.count({ where }),
         this.prisma.task.findMany({
-          where: { deletedAt: null },
+          where,
           take: limit,
           skip: offset,
-          orderBy: { createdAt: 'desc' },
+          orderBy,
+          include: {
+            categories: true,
+          },
         }),
       ]);
 
@@ -186,8 +220,16 @@ export class TasksService {
         data: {
           name: createTaskDto.name,
           description: createTaskDto.description,
-          completed: false,
+          status: 'PENDING',
           userId: tokenPayload.sub,
+          categories: createTaskDto.categoryIds
+            ? {
+                connect: createTaskDto.categoryIds.map((id) => ({ id })),
+              }
+            : undefined,
+        },
+        include: {
+          categories: true,
         },
       });
 
@@ -220,7 +262,7 @@ export class TasksService {
    * @throws {AppError<'TASK_UPDATE_FAILED'>} For unexpected database update issues.
    *
    * @example
-   * await tasksService.updateTask(2, { completed: true }, tokenPayload);
+   * await tasksService.updateTask(2, { status: 'IN_PROGRESS' }, tokenPayload);
    */
   async updateTask(
     id: number,
@@ -235,7 +277,15 @@ export class TasksService {
         data: {
           name: updateTaskDto.name,
           description: updateTaskDto.description,
-          completed: updateTaskDto.completed,
+          status: updateTaskDto.status,
+          categories: updateTaskDto.categoryIds
+            ? {
+                set: updateTaskDto.categoryIds.map((id) => ({ id })),
+              }
+            : undefined,
+        },
+        include: {
+          categories: true,
         },
       });
 

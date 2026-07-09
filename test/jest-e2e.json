@@ -4,6 +4,7 @@
   "modulePaths": ["<rootDir>/../"],
   "moduleNameMapper": {
     "^src/(.*)$": "<rootDir>/../src/$1",
+    "^prisma/(.*)$": "<rootDir>/../prisma/$1",
     "^(\\.{1,2}/.*)\\.js$": ["$1.ts", "$1.js"]
   },
   "testEnvironment": "node",

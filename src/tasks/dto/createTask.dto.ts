@@ -1,8 +1,13 @@
-//#region Imports
-import { IsNotEmpty, IsString, MinLength } from 'class-validator';
-//#endregion
-
-import { ApiProperty } from '@nestjs/swagger';
+import {
+  IsArray,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MinLength,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 //#region DTO
 export class CreateTaskDto {
@@ -27,5 +32,16 @@ export class CreateTaskDto {
   })
   @IsNotEmpty({ message: 'A descrição não pode estar vazio' })
   readonly description: string;
+
+  @ApiPropertyOptional({
+    description: 'Lista de IDs de categorias para associar a esta tarefa.',
+    example: [1, 2],
+    type: [Number],
+  })
+  @IsOptional()
+  @IsArray()
+  @IsInt({ each: true })
+  @Type(() => Number)
+  readonly categoryIds?: number[];
 }
 //#endregion
