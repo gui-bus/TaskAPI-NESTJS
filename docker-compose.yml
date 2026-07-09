@@ -1,0 +1,20 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: task_api
+    ports:
+      - '3000:3000'
+    environment:
+      - PORT=3000
+      - DATABASE_URL=file:./dev.db
+      - JWT_SECRET=super-secret-key-that-is-very-long-and-secure-for-development
+    volumes:
+      - sqlite_data:/usr/src/app/prisma
+      - uploads_data:/usr/src/app/files
+    restart: always
+
+volumes:
+  sqlite_data:
+  uploads_data:

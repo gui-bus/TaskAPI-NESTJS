@@ -1,0 +1,17 @@
+node_modules
+npm-debug.log
+dist
+Dockerfile
+docker-compose.yml
+.git
+.gitignore
+.github
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+CVS
+.svn
+.hg
+.lock-wscript
+.DS_Store
