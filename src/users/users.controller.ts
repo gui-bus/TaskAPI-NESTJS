@@ -25,6 +25,16 @@ import { TokenPayloadParam } from 'src/auth/param/tokenPayload.param';
 import { TokenPayloadDto } from 'src/auth/dto/tokenPayload.dto';
 import { FileInterceptor } from '@nestjs/platform-express';
 //#endregion
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiResponse,
+  ApiConsumes,
+  ApiBody,
+} from '@nestjs/swagger';
+
+@ApiTags('Usuários')
 @Controller('users')
 export class UsersController {
   //#region Setup
@@ -32,21 +42,55 @@ export class UsersController {
   //#endregion
 
   //#region Routes
+  @ApiOperation({
+    summary: 'Listar usuários',
+    description: 'Retorna a lista paginada de todos os usuários cadastrados.',
+  })
+  @ApiResponse({ status: 200, description: 'Lista retornada com sucesso.' })
+  @ApiResponse({
+    status: 400,
+    description: 'Parâmetros de paginação inválidos.',
+  })
   @Get()
   listAllUsers(@Query() paginationDto: PaginationDto) {
     return this.usersService.listAllUsers(paginationDto);
   }
 
+  @ApiOperation({
+    summary: 'Buscar usuário por ID',
+    description: 'Retorna os detalhes de um único usuário baseado no seu ID.',
+  })
+  @ApiResponse({ status: 200, description: 'Usuário encontrado.' })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado.' })
   @Get(':id')
   findUserById(@Param('id', ParseIntPipe) id: number) {
     return this.usersService.findUserById(id);
   }
 
+  @ApiOperation({
+    summary: 'Criar usuário',
+    description: 'Cria um novo usuário com os dados informados.',
+  })
+  @ApiResponse({ status: 201, description: 'Usuário criado com sucesso.' })
+  @ApiResponse({ status: 400, description: 'Dados de entrada inválidos.' })
+  @ApiResponse({ status: 409, description: 'E-mail já cadastrado.' })
   @Post()
   createUser(@Body() createUserDto: CreateUserDto) {
     return this.usersService.createUser(createUserDto);
   }
 
+  @ApiOperation({
+    summary: 'Atualizar usuário',
+    description:
+      'Atualiza o perfil do usuário autenticado correspondente ao ID.',
+  })
+  @ApiBearerAuth()
+  @ApiResponse({ status: 200, description: 'Usuário atualizado com sucesso.' })
+  @ApiResponse({ status: 401, description: 'Não autorizado.' })
+  @ApiResponse({
+    status: 403,
+    description: 'Proibido de atualizar o perfil de outro usuário.',
+  })
   @UseGuards(AuthTokenGuard)
   @Patch(':id')
   updateUser(
@@ -57,6 +101,17 @@ export class UsersController {
     return this.usersService.updateUser(id, updateUserDto, tokenPayload);
   }
 
+  @ApiOperation({
+    summary: 'Excluir usuário',
+    description: 'Exclui o usuário autenticado correspondente ao ID.',
+  })
+  @ApiBearerAuth()
+  @ApiResponse({ status: 200, description: 'Usuário excluído com sucesso.' })
+  @ApiResponse({ status: 401, description: 'Não autorizado.' })
+  @ApiResponse({
+    status: 403,
+    description: 'Proibido de excluir o perfil de outro usuário.',
+  })
   @UseGuards(AuthTokenGuard)
   @Delete(':id')
   deleteUser(
@@ -66,6 +121,30 @@ export class UsersController {
     return this.usersService.deleteUser(id, tokenPayload);
   }
 
+  @ApiOperation({
+    summary: 'Upload de avatar',
+    description:
+      'Permite que o usuário autenticado faça o upload de uma imagem de perfil (JPG, JPEG, PNG ou WEBP de até 1MB).',
+  })
+  @ApiBearerAuth()
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: 'Arquivo de imagem de perfil.',
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 201, description: 'Upload concluído com sucesso.' })
+  @ApiResponse({
+    status: 422,
+    description: 'Tipo ou tamanho do arquivo inválido.',
+  })
   @UseGuards(AuthTokenGuard)
   @UseInterceptors(FileInterceptor('file'))
   @Post('upload')
