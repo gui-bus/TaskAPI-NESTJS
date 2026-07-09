@@ -9,6 +9,9 @@ on:
 env:
   DATABASE_URL: "file:./dev.db"
   JWT_SECRET: "ci-test-secret-key-that-is-extremely-long-and-secure"
+  JWT_TTL: "3600"
+  JWT_TOKEN_AUDIENCE: "https://localhost:3000"
+  JWT_TOKEN_ISSUER: "https://localhost:3000"
 
 jobs:
   build-and-test:
