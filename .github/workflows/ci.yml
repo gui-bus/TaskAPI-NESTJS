@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ master ]
 
+env:
+  DATABASE_URL: "file:./dev.db"
+  JWT_SECRET: "ci-test-secret-key-that-is-extremely-long-and-secure"
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
