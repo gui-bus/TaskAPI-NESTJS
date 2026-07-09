@@ -10,7 +10,7 @@ RUN npm ci
 
 COPY . .
 
-RUN npx prisma generate
+RUN DATABASE_URL=file:./dev.db npx prisma generate
 RUN npm run build
 
 # Remove development node_modules and install only production dependencies
