@@ -5,26 +5,60 @@
 [![Prisma](https://img.shields.io/badge/orm-Prisma%20v7-blue.svg)](https://www.prisma.io/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-API robusta e performática para o gerenciamento de usuários e tarefas cotidianas, desenvolvida seguindo práticas modernas de arquitetura de software utilizando o ecossistema **NestJS**.
+API de nível corporativo e altamente performática para o gerenciamento de usuários, tarefas cotidianas e vinculação de categorias. Este projeto foi desenvolvido seguindo padrões rigorosos de arquitetura de software, automação de testes e boas práticas de desenvolvimento no ecossistema **NestJS**.
 
 ---
 
 ## 🛠️ Stack Tecnológica & Decisões de Design
 
-* **Core**: [NestJS v11](https://nestjs.com/) (Modular, escalável e tipado).
-* **Banco de Dados & ORM**: [Prisma ORM](https://www.prisma.io/) + **SQLite** local (Autocontido, ágil para desenvolvimento local e testes).
+* **Core**: [NestJS v11](https://nestjs.com/) (Framework Node.js progressivo baseado em arquitetura modular e tipagem estrita).
+* **Banco de Dados & ORM**: [Prisma ORM](https://www.prisma.io/) + **SQLite** local (Autocontido, ágil para desenvolvimento local e testes robustos de integração).
 * **Segurança**:
-  * Autenticação via **JWT (JSON Web Tokens)** com verificação estrita por `AuthTokenGuard`.
-  * **Controle de Taxa de Requisições (Rate Limiting)** usando `@nestjs/throttler` (máximo de 60 requisições por minuto por IP) localmente para mitigar brute-force/DOS.
-* **Validação**: Validação estrita de DTOs de entrada via `class-validator` e `class-transformer`.
-* **Documentação interativa**: [Scalar API Reference UI](https://scalar.com/) integrada de forma limpa sobre o gerador do Swagger.
-* **Logger de Auditoria**: Interceptor global (`LoggerInterceptor`) que monitora o tempo de resposta (`latency`) de cada endpoint com o Logger oficial do NestJS.
+  * Autenticação baseada em **JWT (JSON Web Tokens)** com proteção estrita por meio de um `AuthTokenGuard` global.
+  * **Controle de Taxa de Requisições (Rate Limiting)** usando `@nestjs/throttler` (limite padrão de 60 requisições por minuto por IP) para mitigar tentativas de força bruta (Brute-force) ou ataques de DOS.
+* **Validação**: Validação estrita de DTOs (Data Transfer Objects) na borda da aplicação usando `class-validator` e `class-transformer` com higienização de propriedades extras (`whitelist: true`).
+* **Documentação Interativa**: [Scalar API Reference UI](https://scalar.com/) integrada sobre as definições do Swagger OpenAPI, servida na rota `/docs`.
+* **Logger de Auditoria**: Interceptor global (`LoggerInterceptor`) que rastreia os métodos HTTP executados, códigos de retorno e a latência precisa da resposta.
 
 ---
 
-## 📐 Arquitetura do Sistema
+## 📐 Padrões de Projeto & Boas Práticas Adotadas
 
-O diagrama abaixo ilustra o fluxo de processamento de uma requisição HTTP típica na API, cruzando os Guards de segurança e interceptadores antes de atingir os controllers e serviços:
+Para demonstrar maturidade e aderência a boas práticas corporativas, o código adota os seguintes pilares:
+* **Arquitetura Modular**: Domínios isolados (`AuthModule`, `UsersModule`, `TasksModule`, `CategoriesModule`) promovendo encapsulamento e baixo acoplamento.
+* **Injeção de Dependências (DI)**: Utilização nativa do contêiner IoC do NestJS para gerenciamento do ciclo de vida das classes.
+* **Princípio da Responsabilidade Única (SRP)**: Separação nítida entre Controladores (entrada/saída e validações), Serviços (regras de negócio) e Camada de Acesso a Dados (Prisma).
+* **Soft Delete Pattern (Exclusão Lógica)**: As tarefas contam com controle de exclusão lógica usando o campo `deletedAt`. Isso assegura que registros cruciais não sejam apagados fisicamente do banco por engano, permitindo auditorias.
+* **Tratamento de Erros Centralizado**: Factory de erros customizada mapeando códigos de erro específicos para respostas HTTP consistentes.
+
+---
+
+## 📂 Estrutura do Projeto
+
+```
+├── prisma/
+│   ├── schema.prisma       # Modelagem relacional e enums do banco
+│   └── prisma.config.ts    # Configurações do ambiente Prisma
+├── src/
+│   ├── app/                # Módulo raiz da aplicação
+│   ├── auth/               # Regras de autenticação, hashing e JWT
+│   ├── categories/         # Módulo de Categorias/Tags (CRUD & Relação Many-to-Many)
+│   ├── common/             # Elementos globais (guards, interceptadores, erros)
+│   ├── prisma/             # Instância singleton e adapter do Prisma Client
+│   ├── tasks/              # Módulo de Tarefas (Busca avançada, status, soft-delete)
+│   ├── users/              # Módulo de Usuários (Gerenciamento e upload de avatares)
+│   └── main.ts             # Bootstrapping do NestJS com configuração global de Pipes e Guards
+├── test/                   # Testes de Integração e E2E (Jest)
+├── Dockerfile              # Build otimizado multi-stage para produção
+├── docker-compose.yml      # Configuração para subir a aplicação em containers
+└── README.md
+```
+
+---
+
+## 📐 Fluxo de Requisição da API
+
+O diagrama abaixo ilustra a sequência de verificação pela qual cada chamada HTTP passa antes de interagir com as regras de negócio:
 
 ```mermaid
 sequenceDiagram
@@ -36,7 +70,7 @@ sequenceDiagram
     participant Service as Business Service
     participant Database as SQLite (Prisma)
 
-    Cliente->>ThrottlerGuard: HTTP Request (Ex: POST /tasks)
+    Cliente->>ThrottlerGuard: HTTP Request (Ex: GET /tasks)
     alt Limite Excedido (> 60 req/min)
         ThrottlerGuard-->>Cliente: 429 Too Many Requests
     else Dentro do Limite
@@ -58,68 +92,78 @@ sequenceDiagram
 
 ---
 
-## 📂 Principais Entidades e Relacionamentos
+## 🔗 Resumo dos Endpoints Principais
 
-* **User**: Cadastro de usuários com hash de senha seguro e suporte a upload de avatares físicos.
-* **Task**: Registro de tarefas vinculadas a um criador. Possui estados no enum `TaskStatus` (`PENDING`, `IN_PROGRESS`, `COMPLETED`).
-* **Category (Tag)**: Categorias criadas por usuários para organizar suas tarefas. Uma tarefa pode pertencer a múltiplas categorias e uma categoria pode abranger múltiplas tarefas (relação **Many-to-Many** implícita).
+| Método | Endpoint | Protegido? | Descrição |
+| :--- | :--- | :--- | :--- |
+| **POST** | `/auth` | Não | Autentica um usuário e retorna o Token JWT |
+| **POST** | `/users` | Não | Cadastra um novo usuário no sistema |
+| **PATCH** | `/users/avatar` | **Sim (JWT)** | Realiza o upload da imagem de avatar do usuário logado |
+| **POST** | `/tasks` | **Sim (JWT)** | Cadastra uma tarefa vinculando categorias opcionais |
+| **GET** | `/tasks` | **Sim (JWT)** | Lista tarefas paginadas com filtros avançados (`search`, `status`, `categoryId`, ordenação) |
+| **PATCH** | `/tasks/:id` | **Sim (JWT)** | Atualiza propriedades, status e categorias de uma tarefa |
+| **DELETE** | `/tasks/:id` | **Sim (JWT)** | Executa a remoção lógica (soft delete) da tarefa |
+| **POST** | `/categories` | **Sim (JWT)** | Cria uma categoria (tag) para organizar tarefas |
+| **GET** | `/categories` | **Sim (JWT)** | Lista todas as categorias criadas pelo usuário |
 
 ---
 
 ## 🚀 Como Executar o Projeto
 
-Você pode rodar a API localmente de duas formas: via **npm** (ambiente de desenvolvimento local) ou via **Docker Compose** (produção/containers).
-
-### Opção A: Rodar Localmente (NPM)
+### Opção A: Executar Localmente (NPM)
 
 1. **Instale as dependências**:
    ```bash
    npm install
    ```
-2. **Configure o banco de dados local (SQLite)**:
+2. **Configure as Variáveis de Ambiente**:
+   Crie um arquivo `.env` na raiz do projeto com base nas seguintes variáveis:
+   ```env
+   PORT=3000
+   DATABASE_URL="file:./dev.db"
+   JWT_SECRET="um-segredo-longo-e-seguro-para-assinatura-do-jwt"
+   JWT_TTL="3600"
+   JWT_TOKEN_AUDIENCE="http://localhost:3000"
+   JWT_TOKEN_ISSUER="http://localhost:3000"
+   ```
+3. **Execute as Migrações do Banco**:
    ```bash
    npx prisma db push
    ```
-3. **Execute o servidor em modo de desenvolvimento (watch)**:
+4. **Inicialize o Servidor**:
    ```bash
    npm run start:dev
    ```
-4. A API estará de pé em: `http://localhost:3000`
 
-### Opção B: Rodar em Containers (Docker Compose)
+### Opção B: Executar em Containers (Docker Compose)
 
-Você não precisa instalar Node ou SQLite na sua máquina. Basta ter o Docker instalado e rodar:
+Certifique-se de ter o Docker e Docker Compose instalados e execute:
 ```bash
 docker compose up -d --build
 ```
-Isso compilará o build de produção multi-stage do Docker e iniciará o container no endereço `http://localhost:3000`.
+Isso criará os volumes para persistência local do banco e da pasta de arquivos, servindo a aplicação em `http://localhost:3000`.
 
 ---
 
-## 📖 Documentação da API (Playground interativo)
+## 📖 Playground da Documentação (Scalar UI)
 
-Após iniciar o servidor, abra o seu navegador e acesse a documentação do **Scalar**:
+Após inicializar a aplicação, você poderá testar os endpoints interativamente e ler detalhadamente a especificação OpenAPI acessando:
 👉 **[http://localhost:3000/docs](http://localhost:3000/docs)**
 
-Pelo playground do Scalar, você poderá:
-* Efetuar login (`POST /auth`) e copiar o Token JWT de resposta.
-* Autenticar a interface clicando em **Authorize** (passando o token).
-* Criar categorias, cadastrar tarefas enviando listas de IDs de categorias, filtrar listagens e fazer upload do avatar do usuário de forma totalmente visual.
-
 ---
 
-## 🧪 Rodando os Testes
+## 🧪 Suíte de Testes Automatizados
 
-O projeto conta com **76 testes automatizados** cobrindo todas as regras críticas:
+O projeto conta com **76 testes automatizados** para garantir a estabilidade do fluxo de dados:
 
 ```bash
-# Executa todos os testes unitários (services, guards e interceptors)
+# Executa todos os testes unitários (Services, Guards e Interceptors com mocks)
 npm run test
 
-# Executa todos os testes de integração e E2E (com cobertura de rotas de controllers)
+# Executa todos os testes de integração E2E com banco de dados SQLite temporário
 npm run test:e2e
 
-# Gera o relatório completo de cobertura de testes (Jest Coverage)
+# Exibe relatório detalhado de cobertura de testes (Jest Coverage)
 npm run test:cov
 ```
 
@@ -127,8 +171,7 @@ npm run test:cov
 
 ## ⚙️ CI/CD (GitHub Actions)
 
-Toda alteração integrada à ramificação `master` aciona um pipeline automático no **GitHub Actions** (`.github/workflows/ci.yml`) que garante a saúde do projeto executando em ambiente limpo:
-1. Instalação limpa dos pacotes
-2. Verificação de sintaxe e padrões com ESLint (`npm run lint`)
-3. Teste de compilação de produção (`npm run build`)
-4. Validação de testes unitários e testes E2E integrados com SQLite real.
+A esteira automatizada de CI em [.github/workflows/ci.yml](file:///.github/workflows/ci.yml) executa verificações estritas a cada mudança integrada à branch `master`:
+* **Linting**: Validação de padrões de escrita e qualidade de código com ESLint.
+* **Build Compilation**: Garante que o build TypeScript é compilado sem avisos ou erros.
+* **Testing Suites**: Roda todas as baterias de testes unitários e testes de integração de ponta a ponta (E2E) em ambiente Docker Linux limpo.
