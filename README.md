@@ -5,7 +5,7 @@
 [![Prisma](https://img.shields.io/badge/orm-Prisma%20v7-blue.svg)](https://www.prisma.io/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-API robusta e performática para o gerenciamento de usuários e tarefas cotidianas, desenvolvida para demonstrar práticas modernas de arquitetura de software para o nível **Júnior/Pleno** utilizando o ecossistema **NestJS**.
+API robusta e performática para o gerenciamento de usuários e tarefas cotidianas, desenvolvida seguindo práticas modernas de arquitetura de software utilizando o ecossistema **NestJS**.
 
 ---
 
