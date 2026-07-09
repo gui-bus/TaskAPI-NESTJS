@@ -11,7 +11,7 @@ export class AppController {
 
   //#region Routes
   @Get()
-  getHello(): string {
+  getHello(): object {
     return this.appService.getHello();
   }
   //#endregion

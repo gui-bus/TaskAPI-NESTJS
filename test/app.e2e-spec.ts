@@ -17,6 +17,13 @@ describe('AppController (e2e)', () => {
   });
 
   it('/ (GET)', () => {
-    return request(app.getHttpServer()).get('/').expect(200).expect('AAAAAAA');
+    return request(app.getHttpServer())
+      .get('/')
+      .expect(200)
+      .expect({
+        message: 'Welcome to the Task API!',
+        status: 'active',
+        documentation: '/docs',
+      });
   });
 });

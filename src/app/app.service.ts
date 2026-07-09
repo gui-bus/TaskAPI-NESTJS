@@ -5,8 +5,12 @@ import { Injectable } from '@nestjs/common';
 @Injectable()
 export class AppService {
   //#region Queries
-  getHello(): string {
-    return 'AAAAAAA';
+  getHello(): object {
+    return {
+      message: 'Welcome to the Task API!',
+      status: 'active',
+      documentation: '/docs',
+    };
   }
   //#endregion
 }
